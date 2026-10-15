@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Protocol
 
 from astromesh_context._text import content_hash
+from astromesh_context.loop.messages import OpenAIAdapter, units
 from astromesh_context.types import BuildContext, ContextItem, Kind, Stability
 
 
@@ -74,23 +75,7 @@ class CallableSource:
         return self._fn(query, ctx)
 
 
-def _text(message: dict[str, Any]) -> str:
-    content = message.get("content")
-    if isinstance(content, str):
-        parts = [content]
-    elif isinstance(content, list):
-        parts = [
-            p.get("text", "") if isinstance(p, dict) else str(p)
-            for p in content
-            if not isinstance(p, dict) or "text" in p
-        ]
-    else:
-        parts = []
-    for call in message.get("tool_calls") or []:
-        fn = call.get("function", {}) if isinstance(call, dict) else {}
-        if fn:
-            parts.append(f"{fn.get('name', '')}({fn.get('arguments', '')})")
-    return "\n".join(p for p in parts if p)
+_ADAPTER = OpenAIAdapter()
 
 
 class HistorySource:
@@ -110,25 +95,12 @@ class HistorySource:
     def candidates(self, query: str, ctx: BuildContext) -> list[ContextItem]:
         messages = self._messages if self._messages is not None else ctx.vars.get(self._key, [])
         items: list[ContextItem] = []
-        i = 0
-        while i < len(messages):
-            start = i
-            msg = messages[i]
-            i += 1
-            calls = msg.get("tool_calls") if msg.get("role") == "assistant" else None
-            if calls:
-                declared = {c.get("id") for c in calls if isinstance(c, dict)}
-                while (
-                    i < len(messages)
-                    and messages[i].get("role") == "tool"
-                    and messages[i].get("tool_call_id") in declared
-                ):
-                    i += 1
-            unit = list(messages[start:i])
+        start = 0
+        for unit in units(messages, _ADAPTER):
             items.append(
                 ContextItem(
                     id=f"history:{start}",
-                    content="\n".join(t for t in (_text(m) for m in unit) if t),
+                    content="\n".join(t for t in (_ADAPTER.text(m) for m in unit) if t),
                     source=self.name,
                     kind="history",
                     stability="session",
@@ -137,4 +109,5 @@ class HistorySource:
                     meta={"messages": unit},
                 )
             )
+            start += len(unit)
         return items

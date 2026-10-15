@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `Compactor` and `MessageAdapter` (`OpenAIAdapter`, `AnthropicAdapter`): summarize old turns
+  without ever separating a tool call from its result; `units` is shared with `HistorySource`,
+  which no longer groups a call without an id with an id-less tool message.
 - `load_engine` / `load_engine_dict`: build a `ContextEngine` from a `kind: ContextPolicy` YAML
   (budget, tokenizer, policy, scorer, sources), with dotted `SpecError` paths for bad input.
 - `RAGSource` (astromesh-rag pipeline or spec file), `OKFSource` (BM25 over a bundle's concepts,
