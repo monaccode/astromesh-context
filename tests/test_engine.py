@@ -199,3 +199,16 @@ async def test_dedupe_inherits_deprecation_and_trace_has_one_entry_per_candidate
     assert reasons == {"rag:p": "deprecated", "okf:p": "duplicate_of:rag:p"}
     kept = next(e for e in window.trace.entries if e.item_id == "rag:p")
     assert "inherited:deprecated:okf:p" in kept.adjustments
+
+
+async def test_repeated_history_turns_are_both_kept():
+    msgs = [
+        {"role": "user", "content": "sí"},
+        {"role": "assistant", "content": "¿Confirmás la devolución?"},
+        {"role": "user", "content": "sí"},
+    ]
+    engine = ContextEngine([HistorySource(msgs)], budget=500)
+    w = await engine.build("q")
+    turns = [m for m in w.to_messages(include_query=False) if m["role"] != "system"]
+    assert turns == msgs
+    assert not [e for e in w.trace.entries if (e.reason or "").startswith("duplicate_of")]

@@ -50,6 +50,9 @@ def dedupe(
     copy survives and inherits the dropped copy's signals (``deprecated``/``stale`` OR-ed,
     ``trust``/``citation`` when unset). An item is dropped as ``duplicate_of:<kept id>`` when its id, its normalized
     content hash, or (containment over 5-word shingles >= ``threshold``) its content matches a kept one.
+
+    History items (``kind == "history"``) are never deduplicated and never serve as the kept copy:
+    a repeated turn is conversation, not redundant knowledge.
     """
     order = sorted(items, key=lambda s: (not s.item.pinned, -s.final, s.item.id))
     kept_ids: set[str] = set()
@@ -60,6 +63,9 @@ def dedupe(
     dropped: dict[int, tuple[ScoredItem, str]] = {}
     for scored in order:
         item = scored.item
+        if item.kind == "history":
+            kept[id(scored)] = scored
+            continue
         digest = content_hash(item.content)
         dup_of = item.id if item.id in kept_ids else kept_hashes.get(digest)
         sh = shingles(item.content)

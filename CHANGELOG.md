@@ -67,3 +67,5 @@ All notable changes to this project are documented here. The format follows
 
 - Dedupe merges the dropped copy's signals (`deprecated`, `stale`, `trust`, `citation`) into
   the kept item, so a deprecation seen only on one copy is no longer lost.
+- History items are never deduplicated: two identical turns (a user answering "sí" twice) both
+  stay in the window, and a history turn no longer knocks out an identical knowledge item.

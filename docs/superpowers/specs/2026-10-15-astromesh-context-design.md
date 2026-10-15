@@ -209,6 +209,7 @@ Every adjustment is recorded in the trace entry.
    fine for the hundreds this sees; documented as such.
 
 The higher `final` wins; the other is excluded with `duplicate_of:<id>`. Pinned items always win.
+History items are never deduplicated: a repeated turn is conversation, not redundant knowledge.
 
 **Signal merge.** A dropped copy does not take its signals with it: they are merged into the
 kept item. `deprecated` and `stale` are OR-ed; `trust` and `citation` are taken from the dropped

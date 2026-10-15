@@ -278,37 +278,38 @@ uv run --extra eval astromesh-context eval --level 1 --embedder st --out results
 
 | config | budget | recall | precision/token | distractor rate | superseded rate | noise share | tokens/call | candidate tokens | prefix reuse | stable tokens |
 |---|---|---|---|---|---|---|---|---|---|---|
-| everything | 750 | 0.542 | 0.071 | 0.367 | 0.000 | 0.042 | 748.700 | 3150.433 | 1.000 | 512.000 |
-| everything | 1000 | 0.653 | 0.068 | 0.650 | 0.000 | 0.074 | 997.050 | 3150.433 | 1.000 | 512.000 |
-| everything | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.141 | 1979.917 | 3150.433 | 1.000 | 512.000 |
-| fixed_slots | 750 | 0.333 | 0.047 | 0.283 | 0.000 | 0.031 | 694.083 | 3150.433 | 1.000 | 512.000 |
-| fixed_slots | 1000 | 0.606 | 0.071 | 0.467 | 0.000 | 0.045 | 893.117 | 3150.433 | 1.000 | 512.000 |
-| fixed_slots | 2000 | 0.725 | 0.048 | 0.900 | 0.033 | 0.101 | 1638.833 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack | 750 | 0.542 | 0.071 | 0.367 | 0.000 | 0.042 | 748.700 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack | 1000 | 0.653 | 0.068 | 0.650 | 0.000 | 0.074 | 997.050 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.141 | 1979.917 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack_density | 750 | 0.300 | 0.034 | 0.500 | 0.000 | 0.054 | 739.650 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack_density | 1000 | 0.644 | 0.066 | 0.733 | 0.000 | 0.097 | 987.083 | 3150.433 | 1.000 | 512.000 |
-| scored_knapsack_density | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.140 | 1972.750 | 3150.433 | 1.000 | 512.000 |
+| everything | 750 | 0.550 | 0.072 | 0.350 | 0.000 | 0.040 | 748.700 | 3150.433 | 1.000 | 512.000 |
+| everything | 1000 | 0.653 | 0.068 | 0.650 | 0.000 | 0.074 | 996.850 | 3150.433 | 1.000 | 512.000 |
+| everything | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.140 | 1980.383 | 3150.433 | 1.000 | 512.000 |
+| fixed_slots | 750 | 0.333 | 0.047 | 0.283 | 0.000 | 0.031 | 694.200 | 3150.433 | 1.000 | 512.000 |
+| fixed_slots | 1000 | 0.606 | 0.071 | 0.467 | 0.000 | 0.045 | 893.833 | 3150.433 | 1.000 | 512.000 |
+| fixed_slots | 2000 | 0.725 | 0.048 | 0.900 | 0.033 | 0.101 | 1642.433 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack | 750 | 0.550 | 0.072 | 0.350 | 0.000 | 0.040 | 748.717 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack | 1000 | 0.653 | 0.068 | 0.650 | 0.000 | 0.074 | 996.850 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.140 | 1980.383 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack_density | 750 | 0.267 | 0.030 | 0.533 | 0.000 | 0.057 | 740.267 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack_density | 1000 | 0.644 | 0.066 | 0.733 | 0.000 | 0.094 | 985.683 | 3150.433 | 1.000 | 512.000 |
+| scored_knapsack_density | 2000 | 0.750 | 0.041 | 1.000 | 0.033 | 0.139 | 1971.417 | 3150.433 | 1.000 | 512.000 |
 
 Los archivos están en [`results/`](results/). Acá `everything` se trunca al presupuesto, y
 `candidate tokens` es lo que propusieron las fuentes antes de que corriera cualquier política,
 así que todos los presupuestos son una exprimida. Cómo leer la tabla:
 
 - Un presupuesto llenado por puntaje calibrado le gana a las porciones fijas por fuente cuando
-  el presupuesto es ajustado. El recall es 0.542 contra 0.333 de `fixed_slots` con 750 tokens,
+  el presupuesto es ajustado. El recall es 0.550 contra 0.333 de `fixed_slots` con 750 tokens,
   0.653 contra 0.606 con 1000 y 0.750 contra 0.725 con 2000. El precio son más distractores
-  (0.367 contra 0.283 con 750, 0.650 contra 0.467 con 1000), y con 1000 `fixed_slots` tiene
+  (0.350 contra 0.283 con 750, 0.650 contra 0.467 con 1000), y con 1000 `fixed_slots` tiene
   una precisión por token apenas mejor (0.071 contra 0.068).
 - La deduplicación entre fuentes por contención, más la marca de deprecado heredada por la
   copia que queda, mantiene afuera de la ventana las políticas reemplazadas: `superseded_rate`
   es 0.000 con 750 y 1000 y 0.033 con 2000 en todas las configuraciones. Antes de este cambio
   era 0.15 a 0.52, en la corrida del mantenedor en el commit `170d40a`.
-- `scored_knapsack` empata con `everything` truncado en todas las filas, porque los dos llenan
-  por orden de puntaje. Lo que el knapsack agrega sobre el truncado son topes, mínimos y pisos
+- `scored_knapsack` empata con `everything` truncado en recall, precisión y tasa de
+  distractores en todas las filas (los tokens por llamada difieren en menos de 0.1 con 750),
+  porque los dos llenan por orden de puntaje. Lo que el knapsack agrega sobre el truncado son topes, mínimos y pisos
   por fuente, no un mejor ranking.
 - Ponderar por valor por token (`scored_knapsack_density`, `beta=0.5`) perdió con presupuestos
-  ajustados en este corpus: recall 0.300 contra 0.542 con 750, 0.644 contra 0.653 con 1000, y
+  ajustados en este corpus: recall 0.267 contra 0.550 con 750, 0.644 contra 0.653 con 1000, y
   empate con 2000. Por eso el valor por defecto es `beta=0`.
 
 Los resultados de exactitud de respuesta (nivel 2) se van a agregar cuando se revisen las

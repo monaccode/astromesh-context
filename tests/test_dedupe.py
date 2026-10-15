@@ -169,3 +169,17 @@ def test_punctuation_only_texts_never_near_match():
     kept, dropped = dedupe([a, b])
     assert kept == [a, b]
     assert dropped == []
+
+
+def test_history_items_are_never_deduplicated():
+    def hist(id, content):
+        item = ContextItem(
+            id=id, content=content, source="history", kind="history", stability="session"
+        )
+        return ScoredItem(item, 0.5, 0.5)
+
+    a, b = hist("history:0", "sí"), hist("history:2", "sí")
+    knowledge = si("k", "sí", 0.9)
+    kept, dropped = dedupe([a, b, knowledge])
+    assert kept == [a, b, knowledge]
+    assert dropped == []
