@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `RAGSource` (astromesh-rag pipeline or spec file), `OKFSource` (BM25 over a bundle's concepts,
+  with trust/stale/deprecated signals) and `OKFIndexSource` (pinned bundle index), behind the
+  `rag` and `okf` extras.
 - `LLMScorer` and `openai_compatible`: optional model-based rescoring of the top candidates; any
   failure keeps the calibrated scores and records `scorer_fallback:<reason>`.
 - `ContextEngine.build` with `StaticSource`, `CallableSource`, `HistorySource` and `SourceConfig`:
