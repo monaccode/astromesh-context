@@ -112,6 +112,7 @@ window. The dashed step is optional and is the only one that calls a model.
 ## Usage
 
 ```python
+# needs: astromesh_rag, astromesh_okf
 import asyncio
 
 from astromesh_context import ContextEngine, HistorySource, ScoredKnapsack, StaticSource
@@ -161,6 +162,7 @@ spec:
 ```
 
 ```python
+# needs: astromesh_rag, astromesh_okf
 import asyncio
 
 from astromesh_context import load_engine

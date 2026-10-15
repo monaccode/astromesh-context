@@ -116,6 +116,7 @@ siempre la misma ventana. El paso punteado es opcional y es el único que llama 
 ## Uso
 
 ```python
+# needs: astromesh_rag, astromesh_okf
 import asyncio
 
 from astromesh_context import ContextEngine, HistorySource, ScoredKnapsack, StaticSource
@@ -165,6 +166,7 @@ spec:
 ```
 
 ```python
+# needs: astromesh_rag, astromesh_okf
 import asyncio
 
 from astromesh_context import load_engine

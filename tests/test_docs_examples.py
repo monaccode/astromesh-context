@@ -1,7 +1,7 @@
 """Every Python snippet in the READMEs and docs/extending.md runs, in order, per file.
 
-A fenced ```python block runs as written. A first line ``# needs: <module>`` skips the block
-when that module is missing. A ```yaml block whose first line is ``# file: <name>`` is written
+A fenced ```python block runs as written. A first line ``# needs: <module>[, <module>...]``
+skips the block when any of those modules is missing. A ```yaml block whose first line is ``# file: <name>`` is written
 to the working directory so a later snippet can load it. The snippets assume a few names that
 the surrounding prose explains (``system_prompt``, ``messages``, ``pipeline``, ``model``); they
 are provided below with offline fakes.
@@ -95,11 +95,15 @@ def test_snippets_run(path, tmp_path, monkeypatch):
             if first.startswith("# file:"):
                 (tmp_path / first.split(":", 1)[1].strip()).write_text(code, encoding="utf-8")
             continue
-        needs = first.split(":", 1)[1].strip() if first.startswith("# needs:") else None
-        if needs:
-            pytest.importorskip(needs)
-            if needs in ("langchain", "pydantic_ai"):
-                namespace["model"] = fake_model(needs)
+        needs = (
+            [m.strip() for m in first.split(":", 1)[1].split(",") if m.strip()]
+            if first.startswith("# needs:")
+            else []
+        )
+        for module in needs:
+            pytest.importorskip(module)
+            if module in ("langchain", "pydantic_ai"):
+                namespace["model"] = fake_model(module)
         exec(compile(code, f"{path}[{ran}]", "exec"), namespace)
         ran += 1
     assert ran
