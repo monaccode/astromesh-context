@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `ContextEngine.build` with `StaticSource`, `CallableSource`, `HistorySource` and `SourceConfig`:
+  concurrent source gathering with timeouts, graceful `source_error:` events, and a per-candidate
+  `Trace`.
 - Cache-stable ordering (`order_items`: stable, session, volatile edges-first, then history) and
   rendering to text, OpenAI and Anthropic messages, with `stable_prefix_hash`.
 - Policies: `ScoredKnapsack` (density-ordered, per-source caps and floors, `min_items`),
