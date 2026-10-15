@@ -37,3 +37,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked --extra ${{ matrix.extra }} --python 3.12
       - run: uv run --python 3.12 pytest -q tests/${{ matrix.test }}
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked --extra rag --extra okf --python 3.12
+      - run: uv run --python 3.12 pytest -q tests/test_eval_metrics.py tests/test_eval_smoke.py tests/test_cli.py

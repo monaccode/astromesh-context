@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `ContextEval` level 1 and the `astromesh-context` CLI (`eval`, `explain`): compares
+  `everything`, `fixed_slots` and `scored_knapsack` on the vendored Nimbus corpus (recall,
+  precision per token, distractor rate, tokens, prefix reuse) and writes a dated JSON and
+  Markdown report.
 - `Offloader` (with `MemoryStore` / `DirStore`): moves oversized tool results out of the
   conversation, leaving a preview and a handle, and exposes `ctx_read` / `ctx_grep` tools to
   fetch what the agent needs.

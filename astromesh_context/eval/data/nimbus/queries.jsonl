@@ -1,0 +1,60 @@
+{"id": "q-exact-01", "query": "¿Qué significa ERR-4012?", "relevant": ["err-4012"], "type": "exact", "lang": "es"}
+{"id": "q-exact-02", "query": "Me sale ERR-4032 cuando intento subir algo a la carpeta del equipo", "relevant": ["err-4032"], "type": "exact", "lang": "es"}
+{"id": "q-exact-03", "query": "error ERR-5004 subiendo un video pesado", "relevant": ["err-5004"], "type": "exact", "lang": "es"}
+{"id": "q-exact-04", "query": "What does ERR-8011 mean?", "relevant": ["err-8011"], "type": "exact", "lang": "en"}
+{"id": "q-exact-05", "query": "What's included in SKU-77A?", "relevant": ["sku-77a"], "type": "exact", "lang": "en"}
+{"id": "q-exact-06", "query": "¿Cuánto cuesta el SKU-52M?", "relevant": ["sku-52m"], "type": "exact", "lang": "es"}
+{"id": "q-exact-07", "query": "¿Cuánto espacio agrega el SKU-15T?", "relevant": ["sku-15t"], "type": "exact", "lang": "es"}
+{"id": "q-exact-08", "query": "El cliente de escritorio muestra ERR-2102, ¿perdí cambios?", "relevant": ["err-2102"], "type": "exact", "lang": "es"}
+{"id": "q-exact-09", "query": "ERR-3601 no me deja restaurar una versión", "relevant": ["err-3601"], "type": "exact", "lang": "es"}
+{"id": "q-exact-10", "query": "How do I fix ERR-7003 on SSO login?", "relevant": ["err-7003"], "type": "exact", "lang": "en"}
+{"id": "q-exact-11", "query": "La API devuelve ERR-4291, ¿cuándo se libera?", "relevant": ["err-4291"], "type": "exact", "lang": "es"}
+{"id": "q-exact-12", "query": "precio de SKU-34A", "relevant": ["sku-34a"], "type": "exact", "lang": "es"}
+{"id": "q-exact-13", "query": "ERR-6121 al renovar la suscripción", "relevant": ["err-6121"], "type": "exact", "lang": "es"}
+{"id": "q-exact-14", "query": "¿Cada cuánto hace copias el SKU-41B?", "relevant": ["sku-41b"], "type": "exact", "lang": "es"}
+{"id": "q-exact-15", "query": "ERR-9002 on the data export page", "relevant": ["err-9002"], "type": "exact", "lang": "en"}
+{"id": "q-para-01", "query": "me cobraron dos veces este mes", "relevant": ["faq-cargo-duplicado"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-02", "query": "quiero dejar de pagar y quedarme con la cuenta gratis", "relevant": ["faq-baja-suscripcion"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-03", "query": "me pasé a un plan más barato, ¿qué pasa con la plata que ya puse?", "relevant": ["faq-reembolso-prorrateado"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-04", "query": "quiero pagar con otra tarjeta, ¿dónde la cambio?", "relevant": ["faq-medio-de-pago"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-05", "query": "necesito que la factura salga a nombre de mi empresa con el CUIT", "relevant": ["faq-datos-fiscales"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-06", "query": "¿dónde bajo las facturas viejas?", "relevant": ["faq-historial-facturacion"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-07", "query": "no quiero que me sigan debitando cuando termine el año", "relevant": ["faq-renovacion-automatica"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-08", "query": "no me pasó el pago, ¿me cortan el servicio ya mismo?", "relevant": ["faq-periodo-gracia", "faq-suspension-impago"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-09", "query": "me bloquearon la cuenta por no pagar, ¿cómo la vuelvo a abrir?", "relevant": ["faq-reactivacion-cuenta"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-10", "query": "me voy de la empresa y quiero dejarle la cuenta a mi socio", "relevant": ["faq-transferencia-titularidad"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-11", "query": "perdí el celular con el autenticador y no puedo entrar", "relevant": ["faq-perdida-segundo-factor"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-12", "query": "quiero meter más gigas sin cambiarme de plan", "relevant": ["faq-capacidad-adicional", "sku-15s", "sku-15t"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-13", "query": "¿sale más barato si pago todo el año de una?", "relevant": ["faq-descuento-anual"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-14", "query": "soy profe en una escuela, ¿hay precio especial?", "relevant": ["faq-descuento-educativo", "sku-63e"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-15", "query": "¿me cobran por gente que todavía no usa su usuario?", "relevant": ["faq-licencias-no-asignadas"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-16", "query": "alguien me sacó plata a nombre de Nimbus y yo no compré nada", "relevant": ["faq-cargo-no-reconocido"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-17", "query": "veo que mi cuenta está abierta en una compu que no es mía", "relevant": ["faq-cierre-sesiones-remoto"], "type": "paraphrase", "lang": "es"}
+{"id": "q-para-18", "query": "I bumped up my plan halfway through the month, what will I pay?", "relevant": ["faq-upgrade-proration", "faq-cambio-plan-superior"], "type": "paraphrase", "lang": "en"}
+{"id": "q-para-19", "query": "can I just put my account on hold for a few months?", "relevant": ["faq-subscription-pause"], "type": "paraphrase", "lang": "en"}
+{"id": "q-para-20", "query": "my card statement shows a weird amount, not what the plan costs", "relevant": ["faq-charge-currency", "faq-impuestos-moneda"], "type": "paraphrase", "lang": "en"}
+{"id": "q-dist-01", "query": "¿Cuántos días tengo para pedir que me devuelvan la plata?", "relevant": ["pol-reembolsos-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-02", "query": "¿Cuánto tiempo quedan los archivos borrados en la papelera?", "relevant": ["pol-papelera-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-03", "query": "Si no entro a mi cuenta gratis, ¿en cuánto tiempo la borran?", "relevant": ["pol-cuentas-inactivas-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-04", "query": "¿Cuántos caracteres tiene que tener la contraseña?", "relevant": ["pol-contrasenas-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-05", "query": "¿Cuánto se puede descargar por día desde enlaces compartidos?", "relevant": ["pol-uso-aceptable-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-06", "query": "¿Por cuánto tiempo guardan los registros de inicio de sesión?", "relevant": ["pol-registros-acceso-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-07", "query": "¿En cuánto tiempo responde soporte si tengo plan Business?", "relevant": ["pol-soporte-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-08", "query": "¿Qué disponibilidad garantiza Nimbus y qué crédito dan si no se cumple?", "relevant": ["pol-disponibilidad-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-09", "query": "¿Con cuánta anticipación avisan si suben los precios?", "relevant": ["pol-cambios-precio-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-10", "query": "Si cancelo el plan pago, ¿cuánto tiempo guardan mis archivos?", "relevant": ["pol-conservacion-tras-baja-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-11", "query": "¿Cuándo caduca un enlace público si no le pongo fecha?", "relevant": ["pol-enlaces-compartidos-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-12", "query": "¿Qué edad mínima hay que tener para abrir una cuenta?", "relevant": ["pol-edad-minima-2026"], "type": "distractor", "lang": "es"}
+{"id": "q-dist-13", "query": "How much notice do you give before adding a new subprocessor?", "relevant": ["pol-subprocessors-2026"], "type": "distractor", "lang": "en"}
+{"id": "q-dist-14", "query": "How fast will you tell us about a data breach?", "relevant": ["pol-incident-notification-2026"], "type": "distractor", "lang": "en"}
+{"id": "q-dist-15", "query": "What are the API rate limits per minute?", "relevant": ["pol-api-fair-use-2026"], "type": "distractor", "lang": "en"}
+{"id": "q-noise-01", "query": "¿Cómo activo la verificación en dos pasos?", "relevant": ["faq-activar-dos-pasos"], "type": "noise", "lang": "es"}
+{"id": "q-noise-02", "query": "¿Cómo hago para que las facturas le lleguen al área contable?", "relevant": ["faq-contacto-facturacion", "faq-invoice-delivery"], "type": "noise", "lang": "es"}
+{"id": "q-noise-03", "query": "How do I replay failed webhook deliveries?", "relevant": ["err-8010", "err-8011"], "type": "noise", "lang": "en"}
+{"id": "q-noise-04", "query": "¿Qué pasa si se llena la cuota de almacenamiento?", "relevant": ["faq-exceso-cuota", "err-4031", "err-4032"], "type": "noise", "lang": "es"}
+{"id": "q-noise-05", "query": "¿Cómo recupero un archivo que mandé a la papelera?", "relevant": ["err-4040"], "type": "noise", "lang": "es"}
+{"id": "q-noise-06", "query": "El enlace compartido que me pasaron no abre, ¿qué hago?", "relevant": ["err-3307", "err-3308"], "type": "noise", "lang": "es"}
+{"id": "q-noise-07", "query": "My new laptop can't open my encrypted folder", "relevant": ["err-2999"], "type": "noise", "lang": "en"}
+{"id": "q-noise-08", "query": "How do I export all my data?", "relevant": ["faq-portabilidad-datos", "err-9002"], "type": "noise", "lang": "en"}
+{"id": "q-noise-09", "query": "¿Qué plan incluye inicio de sesión único con SAML?", "relevant": ["sku-77a", "sku-77m"], "type": "noise", "lang": "es"}
+{"id": "q-noise-10", "query": "¿Cuántas computadoras puedo vincular a mi cuenta gratis?", "relevant": ["faq-dispositivos-vinculados"], "type": "noise", "lang": "es"}

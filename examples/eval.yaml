@@ -1,0 +1,16 @@
+# A ContextPolicy for `astromesh-context explain`. It needs no extras: a pinned system prompt
+# and the chat history. The `eval` command builds its own richer configs (see eval/runner.py).
+#
+#   astromesh-context explain --config examples/eval.yaml --query "¿Qué significa ERR-4012?"
+apiVersion: astromesh/v1
+kind: ContextPolicy
+metadata: { name: nimbus-eval }
+spec:
+  budget: 4000
+  policy: { type: scored_knapsack, beta: 0.5 }
+  sources:
+    - type: static
+      text: "You are Nimbus support. Answer only from the context provided. Cite the context id you used."
+      pinned: true
+      stability: stable
+    - { type: history, min_items: 2 }
