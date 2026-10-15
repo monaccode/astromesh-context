@@ -1,0 +1,232 @@
+{
+  "level": 1,
+  "corpus_sha256": "44d13cfb3a0f6eeac8e25c54c628b809e56b205355f4071c09a1942a198078da",
+  "queries_sha256": "3619ce0b66c0ed5736988aa6be333378b456c8acc5221e7c5ad50ff4c5043d4c",
+  "answers_sha256": "1901bf481f5cdc30d70bf7e8bfdd8af888816c355496cb1a4d12b67bf268f4b5",
+  "cases": 60,
+  "configs": [
+    "everything",
+    "fixed_slots",
+    "scored_knapsack",
+    "scored_knapsack_density"
+  ],
+  "budgets": [
+    750,
+    1000,
+    2000
+  ],
+  "history_turns": 4,
+  "config_meta": {
+    "everything": {
+      "policy": "Everything",
+      "truncate": true,
+      "rag_pattern": "hybrid",
+      "rag_k": 20,
+      "okf_limit": 10,
+      "splitter": {
+        "size": 800,
+        "overlap": 80
+      },
+      "embedder": "SentenceTransformersEmbedder"
+    },
+    "fixed_slots": {
+      "policy": "FixedSlots",
+      "shares": {
+        "okf": 0.3,
+        "rag": 0.5,
+        "history": 0.2
+      },
+      "rag_pattern": "hybrid",
+      "rag_k": 20,
+      "okf_limit": 10,
+      "splitter": {
+        "size": 800,
+        "overlap": 80
+      },
+      "embedder": "SentenceTransformersEmbedder"
+    },
+    "scored_knapsack": {
+      "policy": "ScoredKnapsack",
+      "beta": 0.0,
+      "rag_pattern": "hybrid",
+      "rag_k": 20,
+      "okf_limit": 10,
+      "splitter": {
+        "size": 800,
+        "overlap": 80
+      },
+      "embedder": "SentenceTransformersEmbedder"
+    },
+    "scored_knapsack_density": {
+      "policy": "ScoredKnapsack",
+      "beta": 0.5,
+      "rag_pattern": "hybrid",
+      "rag_k": 20,
+      "okf_limit": 10,
+      "splitter": {
+        "size": 800,
+        "overlap": 80
+      },
+      "embedder": "SentenceTransformersEmbedder"
+    }
+  },
+  "command": "astromesh-context eval --level 1 --embedder st --out results/",
+  "rows": [
+    {
+      "config": "everything",
+      "budget": 750,
+      "recall": 0.5416666666666666,
+      "precision_per_token": 0.07088829057067743,
+      "distractor_rate": 0.36666666666666664,
+      "superseded_rate": 0.0,
+      "noise_share": 0.041839237060274856,
+      "tokens_per_call": 748.7,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "everything",
+      "budget": 1000,
+      "recall": 0.6527777777777778,
+      "precision_per_token": 0.06827493104948888,
+      "distractor_rate": 0.65,
+      "superseded_rate": 0.0,
+      "noise_share": 0.074453713736314,
+      "tokens_per_call": 997.05,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "everything",
+      "budget": 2000,
+      "recall": 0.75,
+      "precision_per_token": 0.040666150320722114,
+      "distractor_rate": 1.0,
+      "superseded_rate": 0.03333333333333333,
+      "noise_share": 0.14120098013938792,
+      "tokens_per_call": 1979.9166666666667,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "fixed_slots",
+      "budget": 750,
+      "recall": 0.3333333333333333,
+      "precision_per_token": 0.04678188953627748,
+      "distractor_rate": 0.2833333333333333,
+      "superseded_rate": 0.0,
+      "noise_share": 0.030942462849839016,
+      "tokens_per_call": 694.0833333333334,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "fixed_slots",
+      "budget": 1000,
+      "recall": 0.6055555555555556,
+      "precision_per_token": 0.07084846127367364,
+      "distractor_rate": 0.4666666666666667,
+      "superseded_rate": 0.0,
+      "noise_share": 0.045360220475100084,
+      "tokens_per_call": 893.1166666666667,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "fixed_slots",
+      "budget": 2000,
+      "recall": 0.725,
+      "precision_per_token": 0.04837033941656681,
+      "distractor_rate": 0.9,
+      "superseded_rate": 0.03333333333333333,
+      "noise_share": 0.10102520052454947,
+      "tokens_per_call": 1638.8333333333333,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack",
+      "budget": 750,
+      "recall": 0.5416666666666666,
+      "precision_per_token": 0.07088829057067743,
+      "distractor_rate": 0.36666666666666664,
+      "superseded_rate": 0.0,
+      "noise_share": 0.04161671814616716,
+      "tokens_per_call": 748.7,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack",
+      "budget": 1000,
+      "recall": 0.6527777777777778,
+      "precision_per_token": 0.06827493104948888,
+      "distractor_rate": 0.65,
+      "superseded_rate": 0.0,
+      "noise_share": 0.074453713736314,
+      "tokens_per_call": 997.05,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack",
+      "budget": 2000,
+      "recall": 0.75,
+      "precision_per_token": 0.040666150320722114,
+      "distractor_rate": 1.0,
+      "superseded_rate": 0.03333333333333333,
+      "noise_share": 0.14120098013938792,
+      "tokens_per_call": 1979.9166666666667,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack_density",
+      "budget": 750,
+      "recall": 0.3,
+      "precision_per_token": 0.03449097613592136,
+      "distractor_rate": 0.5,
+      "superseded_rate": 0.0,
+      "noise_share": 0.05439505728202065,
+      "tokens_per_call": 739.65,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack_density",
+      "budget": 1000,
+      "recall": 0.6444444444444444,
+      "precision_per_token": 0.06638926224671862,
+      "distractor_rate": 0.7333333333333333,
+      "superseded_rate": 0.0,
+      "noise_share": 0.09682973621397681,
+      "tokens_per_call": 987.0833333333334,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    },
+    {
+      "config": "scored_knapsack_density",
+      "budget": 2000,
+      "recall": 0.75,
+      "precision_per_token": 0.040825465319666875,
+      "distractor_rate": 1.0,
+      "superseded_rate": 0.03333333333333333,
+      "noise_share": 0.14029427609168374,
+      "tokens_per_call": 1972.75,
+      "candidate_tokens": 3150.4333333333334,
+      "prefix_reuse": 1.0,
+      "stable_tokens": 512.0
+    }
+  ]
+}

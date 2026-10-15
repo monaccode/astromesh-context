@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- First published level-1 results (`results/2026-10-15-st-L1.{json,md}`, Nimbus corpus,
+  `all-MiniLM-L6-v2`), `docs/extending.md`, and READMEs rewritten for the shipped API; every
+  Python snippet in them is executed by `tests/test_docs_examples.py`.
 - Integrations: `ContextMiddleware` for LangChain 1.x (`astromesh-context[langchain]`),
   `history_processor` for PydanticAI (`[pydantic-ai]`) and an MCP server with `ctx_build`,
   `ctx_read` and `ctx_grep` (`[mcp]`, `astromesh-context mcp --config policy.yaml`); each has
