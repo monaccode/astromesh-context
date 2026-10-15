@@ -18,6 +18,7 @@ from astromesh_context.source import (
     SourceConfig,
     StaticSource,
 )
+from astromesh_context.spec import load_engine
 from astromesh_context.tokens import CharEstimator
 from astromesh_context.types import Budget, ContextItem, Signals, Trace, Window
 
@@ -43,5 +44,6 @@ __all__ = [
     "Trace",
     "Window",
     "__version__",
+    "load_engine",
     "openai_compatible",
 ]

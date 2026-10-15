@@ -1,0 +1,27 @@
+apiVersion: astromesh/v1
+kind: ContextPolicy
+spec:
+  budget: 4000
+  tokenizer: chars
+  policy:
+    type: scored_knapsack
+    beta: 0.5
+  sources:
+    - type: static
+      name: system
+      text_file: system.md
+      pinned: true
+    - type: okf_index
+      name: index
+      bundle: kb
+      path: /
+    - type: okf
+      name: kb
+      bundle: kb
+      limit: 5
+      weight: 1.5
+      max_tokens: 1500
+    - type: history
+      name: history
+      key: history
+      min_items: 2

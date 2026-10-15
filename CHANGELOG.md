@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `load_engine` / `load_engine_dict`: build a `ContextEngine` from a `kind: ContextPolicy` YAML
+  (budget, tokenizer, policy, scorer, sources), with dotted `SpecError` paths for bad input.
 - `RAGSource` (astromesh-rag pipeline or spec file), `OKFSource` (BM25 over a bundle's concepts,
   with trust/stale/deprecated signals) and `OKFIndexSource` (pinned bundle index), behind the
   `rag` and `okf` extras.
