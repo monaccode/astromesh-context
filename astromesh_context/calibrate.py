@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 
 from astromesh_context.types import ContextItem, ScoredItem
 
-_MODES = ("blend", "rank", "minmax", "zscore")
+MODES = ("blend", "rank", "minmax", "zscore")
 
 
 class Calibrator:
@@ -30,7 +30,7 @@ class Calibrator:
         values: dict[int, float] = {}
         for source, group in groups.items():
             mode = modes.get(source, "blend")
-            if mode not in _MODES:
+            if mode not in MODES:
                 raise ValueError(f"unknown calibration mode {mode!r} for source {source!r}")
             for it, v in zip(group, self._mode_values(group, mode), strict=True):
                 values[id(it)] = v

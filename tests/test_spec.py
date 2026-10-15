@@ -244,3 +244,21 @@ def test_invalid_yaml_is_spec_error(tmp_path):
     with pytest.raises(SpecError) as e:
         load_engine(p)
     assert e.value.path == ""
+
+
+def test_duplicate_source_names_report_spec_path(tmp_path):
+    raw = {
+        "apiVersion": "astromesh/v1",
+        "kind": "ContextPolicy",
+        "spec": {
+            "budget": 100,
+            "sources": [
+                {"type": "static", "text": "a"},
+                {"type": "static", "text": "b"},
+            ],
+        },
+    }
+    with pytest.raises(SpecError) as exc:
+        load_engine_dict(raw, base_dir=tmp_path)
+    assert exc.value.path == "spec.sources[1].name"
+    assert "static" in str(exc.value)

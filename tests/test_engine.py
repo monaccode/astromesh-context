@@ -305,3 +305,20 @@ def test_unknown_mode_rejected():
     with pytest.raises(ConfigError, match="mode"):
         ContextEngine([SourceConfig(StaticSource("x"), mode="bogus")], budget=10)
     assert issubclass(ConfigError, ValueError)
+
+
+async def test_numpy_integer_tokens_are_accepted():
+    np = pytest.importorskip("numpy")
+    item = ContextItem("k", "hello", "k", "knowledge", "volatile", score=1.0, tokens=np.int64(3))
+    engine = ContextEngine([CallableSource(lambda q, c: [item], name="k")], budget=100)
+    w = await engine.build("q")
+    assert [i.id for i in w.items] == ["k"]
+    assert w.trace.events == []
+    assert w.tokens_used == 3
+
+
+def test_modes_have_one_definition():
+    from astromesh_context import calibrate, engine, spec
+
+    assert engine.MODES is calibrate.MODES
+    assert spec.MODES is calibrate.MODES

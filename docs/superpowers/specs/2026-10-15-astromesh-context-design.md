@@ -70,7 +70,7 @@ It is the fifth family in the map the Astromesh docs publish
 astromesh_context/
   __init__.py      public API re-exports
   types.py         ContextItem, Signals, Window, Trace, TraceEntry, Budget, Selection
-  errors.py        ContextError, BudgetExceededError, SpecError
+  errors.py        ContextError, BudgetExceededError, SpecError, ConfigError, MissingExtraError
   source.py        Source protocol; StaticSource, CallableSource, HistorySource
   tokens.py        Tokenizer protocol; CharEstimator (default); TiktokenTokenizer ([tiktoken])
   calibrate.py     per-source normalization (rank, minmax, zscore) + signal adjustments
@@ -355,11 +355,13 @@ Principle: **a build degrades, never fails because of one source, and never trim
 | Situation | Behaviour | Trace |
 |---|---|---|
 | A source raises or exceeds its timeout | Built without it | `source_error:<name>` with message |
+| A source returns a malformed item (not a `ContextItem`, non-str content, non-finite score, bad `tokens`) | Built without that source | `source_error:<name>:invalid item <index>: <why>` |
 | Every source fails | Window of pinned items only | per source |
 | `LLMScorer` fails, times out, or returns unparseable output | Calibrated scores used | `scorer_fallback:<reason>` |
 | Pinned items alone exceed the budget | `BudgetExceededError` with per-item tokens | — |
 | `Everything` without `truncate` does not fit | `BudgetExceededError` | — |
-| Invalid YAML spec | `SpecError` at load, with field path | — |
+| Invalid YAML spec (including two sources with the same name) | `SpecError` at load, with field path | — |
+| Invalid engine config in Python (duplicate source names, unknown `mode`, bad `FixedSlots` shares) | `ConfigError` (a `ContextError` and a `ValueError`) at construction | — |
 | Item without `tokens` | Counted with the configured tokenizer | — |
 
 Exclusion reasons are a closed set: `budget`, `source_cap`, `below_floor`, `deprecated`,

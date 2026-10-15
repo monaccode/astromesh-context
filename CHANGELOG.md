@@ -70,6 +70,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A `kind: ContextPolicy` YAML with two sources of the same name now raises `SpecError` at `spec.sources[i].name` instead of a bare `ConfigError`; integer-typed `tokens` from libraries such as numpy are accepted.
 - Dedupe merges the dropped copy's signals (`deprecated`, `stale`, `trust`, `citation`) into
   the kept item, so a deprecation seen only on one copy is no longer lost.
 - History items are never deduplicated: two identical turns (a user answering "sí" twice) both

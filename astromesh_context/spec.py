@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from astromesh_context.calibrate import MODES
 from astromesh_context.engine import ContextEngine
 from astromesh_context.errors import SpecError
 from astromesh_context.policy import Everything, FixedSlots, Policy, ScoredKnapsack
@@ -23,7 +24,6 @@ from astromesh_context.tokens import CharEstimator, TiktokenTokenizer, Tokenizer
 
 _API_VERSION = "astromesh/v1"
 _KIND = "ContextPolicy"
-_MODES = ("blend", "rank", "minmax", "zscore")
 _SHARED = ("weight", "max_tokens", "min_items", "timeout", "mode")
 _POLICIES: dict[str, tuple[Callable[..., Policy], tuple[str, ...]]] = {
     "scored_knapsack": (ScoredKnapsack, ("beta", "min_score", "include_deprecated")),
@@ -139,8 +139,8 @@ def _shared(block: Mapping[str, Any], path: str) -> dict[str, Any]:
             raise SpecError(f"{path}.{key}", "must be an integer >= 0")
         if key == "timeout" and not (_is_num(v) and v > 0):
             raise SpecError(f"{path}.timeout", "must be a number > 0")
-        if key == "mode" and v not in _MODES:
-            raise SpecError(f"{path}.mode", f"must be one of {list(_MODES)}")
+        if key == "mode" and v not in MODES:
+            raise SpecError(f"{path}.mode", f"must be one of {list(MODES)}")
         out[key] = v
     return out
 
@@ -271,6 +271,15 @@ def load_engine_dict(
     policy = _policy(spec.get("policy"))
     scorer = _scorer(spec.get("scorer"), complete)
     sources = [_source(s, i, base_dir, objects) for i, s in enumerate(sources_raw)]
+    seen: set[str] = set()
+    for i, s in enumerate(sources):
+        name = (s.source if isinstance(s, SourceConfig) else s).name
+        if name in seen:
+            raise SpecError(
+                f"spec.sources[{i}].name",
+                f"duplicate source name {name!r}; give each source a distinct `name`",
+            )
+        seen.add(name)
     return ContextEngine(sources, budget=budget, policy=policy, tokenizer=tokenizer, scorer=scorer)
 
 

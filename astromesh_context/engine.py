@@ -11,7 +11,7 @@ import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from astromesh_context.calibrate import Calibrator
+from astromesh_context.calibrate import MODES, Calibrator
 from astromesh_context.dedupe import dedupe
 from astromesh_context.errors import ConfigError
 from astromesh_context.order import order_items
@@ -21,8 +21,6 @@ from astromesh_context.scorer import Scorer, ScorerFallback
 from astromesh_context.source import HistorySource, Source, SourceConfig
 from astromesh_context.tokens import CharEstimator, Tokenizer
 from astromesh_context.types import Budget, BuildContext, ContextItem, Trace, TraceEntry, Window
-
-_MODES = ("blend", "rank", "minmax", "zscore")
 
 
 def _invalid(it: object) -> str | None:
@@ -36,7 +34,7 @@ def _invalid(it: object) -> str | None:
     if not math.isfinite(it.score):
         return f"score is not finite ({it.score})"
     if it.tokens is not None and (
-        isinstance(it.tokens, bool) or not isinstance(it.tokens, int) or it.tokens < 0
+        isinstance(it.tokens, bool) or not isinstance(it.tokens, numbers.Integral) or it.tokens < 0
     ):
         return f"tokens must be None or an int >= 0, got {it.tokens!r}"
     return None
@@ -62,9 +60,9 @@ class ContextEngine:
                 c = dataclasses.replace(
                     c, min_items=2 if isinstance(c.source, HistorySource) else 0
                 )
-            if c.mode not in _MODES:
+            if c.mode not in MODES:
                 raise ConfigError(
-                    f"source {c.source.name!r}: mode must be one of {list(_MODES)}, got {c.mode!r}"
+                    f"source {c.source.name!r}: mode must be one of {list(MODES)}, got {c.mode!r}"
                 )
             if any(other.source.name == c.source.name for other in self.configs):
                 raise ConfigError(f"duplicate source name {c.source.name!r}")
