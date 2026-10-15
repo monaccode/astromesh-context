@@ -8,7 +8,7 @@
 
 [![astromesh-runtime](https://img.shields.io/badge/astromesh-runtime-f472b6)](https://monaccode.github.io/astromesh/#ecosystem)
 [![Status: in design](https://img.shields.io/badge/status-in%20design-fb7185)](#status)
-[![Python](https://img.shields.io/badge/python-3.12%2B-3776ab)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776ab)](https://www.python.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/monaccode/astromesh-context/blob/main/LICENSE)
 
 *[Leer en español](https://github.com/monaccode/astromesh-context/blob/main/README.es.md)*
@@ -135,7 +135,7 @@ spec:
   sources:
     - { type: okf_index, bundle: ./kb, pinned: true }
     - { type: okf, bundle: ./kb, limit: 10, weight: 1.2 }
-    - { type: rag, pipeline: support-docs, k: 20, max_tokens: 3000 }
+    - { type: rag, pipeline: pipelines/support.rag.yaml, k: 20, max_tokens: 3000 }
     - { type: history, min_items: 2 }
 ```
 
