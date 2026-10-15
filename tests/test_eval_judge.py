@@ -70,7 +70,16 @@ async def test_judge_prompt_is_exact():
     assert JUDGE_PROMPT.format(question="Q?", reference="REF", answer="ANS") == prompts[0]
 
 
-@pytest.mark.parametrize("reply", ["correct", "CORRECT.", "The answer is CORRECT", "", "maybe"])
+@pytest.mark.parametrize(
+    ("reply", "score"), [("correct", 1.0), ("CORRECT.", 1.0), (" Partial! ", 0.5), ("wrong.", 0.0)]
+)
+async def test_judge_normalizes_case_and_trailing_punctuation(reply, score):
+    assert await judge_answer(fake_judge(reply), "q", "r", "a") == score
+
+
+@pytest.mark.parametrize(
+    "reply", ["The answer is CORRECT", "", "CORRECT because x", "CORRECT, because x", "maybe"]
+)
 async def test_judge_unparsed_is_zero_and_counted(reply):
     ds = tiny_dataset()
     assert await judge_answer(fake_judge(reply), "q", "r", "a") == 0.0
@@ -222,3 +231,27 @@ def test_cli_level2_missing_env(tmp_path, monkeypatch, capsys):
     err = capsys.readouterr().err
     assert err.startswith("error: set CTX_EVAL_API_KEY")
     assert "CTX_EVAL_MODEL" in err
+
+
+@respx.mock
+def test_http_error_message_hides_endpoint_and_key(tmp_path, monkeypatch, capsys):
+    pytest.importorskip("astromesh_rag")
+    pytest.importorskip("astromesh_okf")
+    from astromesh_context.cli import main
+
+    monkeypatch.setenv("CTX_EVAL_BASE_URL", "https://llm.example.test/secret-path/v1")
+    monkeypatch.setenv("CTX_EVAL_API_KEY", SENTINEL)
+    monkeypatch.setenv("CTX_EVAL_MODEL", "answer-m")
+    monkeypatch.delenv("CTX_EVAL_JUDGE_MODEL", raising=False)
+    respx.post("https://llm.example.test/secret-path/v1/chat/completions").mock(
+        return_value=httpx.Response(401)
+    )
+    code = main(
+        ["eval", "--level", "2", "--subset", "2", "--budgets", "1000", "--out", str(tmp_path)]
+    )
+    out = capsys.readouterr()
+    assert code == 2
+    assert "error: model call failed (HTTPStatusError 401)" in out.err
+    for text in (out.out, out.err):
+        assert SENTINEL not in text
+        assert "secret-path" not in text

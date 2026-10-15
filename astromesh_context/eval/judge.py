@@ -18,7 +18,11 @@ async def grade_answer(
     """``(score, parsed)``; a reply that is not exactly one verdict word scores 0.0, unparsed."""
     prompt = JUDGE_PROMPT.format(question=question, reference=reference, answer=answer)
     reply = await complete(prompt)
-    score = _VERDICTS.get(reply.strip()) if isinstance(reply, str) else None
+    score = (
+        _VERDICTS.get(reply.strip().rstrip(".!").strip().upper())
+        if isinstance(reply, str)
+        else None
+    )
     return (0.0, False) if score is None else (score, True)
 
 
