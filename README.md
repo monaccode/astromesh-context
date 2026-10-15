@@ -322,6 +322,8 @@ carry over to the framework's own message type. The snippets reuse `engine`, `co
 **LangChain 1.x** (`astromesh-context[langchain]`): `ContextMiddleware` offloads and compacts
 the thread before each model call and, if you give it an engine, appends the window to the
 system message. `offload_tools` gives the agent `ctx_read` and `ctx_grep` as LangChain tools.
+For a graph you build yourself, `context_node(engine)` is a LangGraph node to put before the
+model: it adds the window as a `SystemMessage` named `context_window`, replacing last turn's.
 
 ```python
 # needs: langchain

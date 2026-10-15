@@ -1,4 +1,5 @@
-"""LangChain 1.x: an ``AgentMiddleware`` for ``langchain.agents.create_agent``.
+"""LangChain 1.x: an ``AgentMiddleware`` for ``langchain.agents.create_agent``, and
+``context_node`` for a hand-built LangGraph graph.
 
 Hooks used (langchain 1.x): ``before_model`` / ``abefore_model`` to offload and compact the state
 messages, and ``wrap_model_call`` / ``awrap_model_call`` to put the engine window in the system
@@ -152,6 +153,38 @@ class ContextMiddleware(AgentMiddleware):
             return await handler(request)
         window = await self.engine.build(query)
         return await handler(self._with_window(request, window.to_text()))
+
+
+WINDOW_NAME = "context_window"
+
+
+def context_node(engine: ContextEngine) -> Callable[[Any], Awaitable[dict[str, Any]]]:
+    """A LangGraph node that puts the engine window in the state before the model node.
+
+    The window is built from the last human message in ``state["messages"]`` and stored as a
+    ``SystemMessage(name="context_window")`` placed after any leading system messages; a window
+    from an earlier turn is replaced, never stacked. With no human message the node returns
+    ``{}``. The update rewrites ``messages`` (``RemoveMessage(id=REMOVE_ALL_MESSAGES)`` followed
+    by the new list), so the state key must use the ``add_messages`` reducer, as
+    ``MessagesState`` does.
+    """
+
+    async def node(state: Any) -> dict[str, Any]:
+        messages = list(state["messages"])
+        query = _last_human_text(messages)
+        if query is None:
+            return {}
+        window = await engine.build(query)
+        rest = [m for m in messages if not (m.type == "system" and m.name == WINDOW_NAME)]
+        lead = 0
+        while lead < len(rest) and rest[lead].type == "system":
+            lead += 1
+        new = SystemMessage(content=window.to_text(), name=WINDOW_NAME)
+        return {
+            "messages": [RemoveMessage(id=REMOVE_ALL_MESSAGES), *rest[:lead], new, *rest[lead:]]
+        }
+
+    return node
 
 
 def offload_tools(offloader: Offloader) -> list:

@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `context_node(engine)` in `astromesh_context.integrations.langchain`: a LangGraph node that
+  adds the window to the state as `SystemMessage(name="context_window")`, replacing the
+  previous turn's.
 - First published level-1 results (`results/2026-10-15-st-L1.{json,md}`, Nimbus corpus,
   `all-MiniLM-L6-v2`), `docs/extending.md`, and READMEs rewritten for the shipped API; every
   Python snippet in them is executed by `tests/test_docs_examples.py`.

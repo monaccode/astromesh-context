@@ -156,3 +156,42 @@ def test_sync_invoke_builds_the_window():
     agent = create_agent(m, tools=[], middleware=[ContextMiddleware(engine)])
     agent.invoke({"messages": [HumanMessage(content="hello")]})
     assert "PINNED-RULE-42" in m.seen[0][0].content
+
+
+async def test_context_node_puts_the_window_before_the_model_in_a_graph():
+    from langgraph.graph import END, START, MessagesState, StateGraph
+
+    from astromesh_context.integrations.langchain import context_node
+
+    engine = ContextEngine([StaticSource("PINNED-RULE-42", pinned=True)], budget=500)
+    m = RecordingModel(messages=iter([AIMessage(content="one"), AIMessage(content="two")]))
+
+    async def call_model(state):
+        return {"messages": [await m.ainvoke(state["messages"])]}
+
+    graph = StateGraph(MessagesState)
+    graph.add_node("context", context_node(engine))
+    graph.add_node("model", call_model)
+    graph.add_edge(START, "context")
+    graph.add_edge("context", "model")
+    graph.add_edge("model", END)
+    app = graph.compile()
+
+    first = await app.ainvoke({"messages": [HumanMessage(content="hello")]})
+    sent = m.seen[0]
+    assert isinstance(sent[0], SystemMessage)
+    assert sent[0].name == "context_window"
+    assert "PINNED-RULE-42" in sent[0].content
+    assert [x.type for x in sent] == ["system", "human"]
+
+    again = await app.ainvoke({"messages": [*first["messages"], HumanMessage(content="more")]})
+    windows = [x for x in again["messages"] if getattr(x, "name", None) == "context_window"]
+    assert len(windows) == 1  # replaced, not stacked
+    assert [x.type for x in m.seen[-1]] == ["system", "human", "ai", "human"]
+
+
+async def test_context_node_without_a_human_message_changes_nothing():
+    from astromesh_context.integrations.langchain import context_node
+
+    engine = ContextEngine([StaticSource("PINNED-RULE-42", pinned=True)], budget=500)
+    assert await context_node(engine)({"messages": [AIMessage(content="earlier")]}) == {}

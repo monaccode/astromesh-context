@@ -329,6 +329,9 @@ funcionan con el tipo de mensaje propio del framework. Los ejemplos reusan `engi
 **LangChain 1.x** (`astromesh-context[langchain]`): `ContextMiddleware` descarga y compacta el
 hilo antes de cada llamada al modelo y, si le pasás un motor, agrega la ventana al mensaje de
 sistema. `offload_tools` le da al agente `ctx_read` y `ctx_grep` como tools de LangChain.
+Para un grafo que armás vos, `context_node(engine)` es un nodo de LangGraph para poner antes
+del modelo: agrega la ventana como un `SystemMessage` llamado `context_window` y reemplaza el
+del turno anterior.
 
 ```python
 # needs: langchain
