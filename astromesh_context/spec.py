@@ -32,12 +32,14 @@ _POLICIES: dict[str, tuple[Callable[..., Policy], tuple[str, ...]]] = {
 }
 _SCORER_KEYS = ("top_n", "alpha", "timeout")
 _STATIC_ONLY = ("pinned", "kind", "stability")
+_KINDS = ("instruction", "knowledge", "memory", "history", "tool_result")
+_STABILITIES = ("stable", "session", "volatile")
 # type -> keys accepted besides `type`, `name` and the shared SourceConfig keys
 _SOURCE_KEYS: dict[str, tuple[str, ...]] = {
     "static": ("text", "text_file", *_STATIC_ONLY),
-    "okf_index": ("bundle", "path"),
+    "okf_index": ("bundle", "path", "pinned"),
     "okf": ("bundle", "limit"),
-    "rag": ("pipeline",),
+    "rag": ("pipeline", "k"),
     "history": ("key",),
     "callable": ("object", *_STATIC_ONLY),
 }
@@ -155,8 +157,10 @@ def _static_extras(block: Mapping[str, Any], path: str) -> dict[str, Any]:
         if not isinstance(block["pinned"], bool):
             raise SpecError(f"{path}.pinned", "must be a boolean")
         extra["pinned"] = block["pinned"]
-    for key in ("kind", "stability"):
+    for key, allowed in (("kind", _KINDS), ("stability", _STABILITIES)):
         if key in block:
+            if block[key] not in allowed:
+                raise SpecError(f"{path}.{key}", f"must be one of {list(allowed)}")
             extra[key] = block[key]
     return extra
 
@@ -214,12 +218,17 @@ def _source(
             pipeline = _resolve(pipeline, base_dir)
         else:
             raise SpecError(f"{path}.pipeline", "must be a path or {object: <key>}")
-        source = RAGSource(pipeline, **named)
+        k = block.get("k")
+        if k is not None and not (_is_int(k) and k > 0):
+            raise SpecError(f"{path}.k", "must be an integer > 0")
+        source = RAGSource(pipeline, **({"k": k} if k else {}), **named)
     else:
         bundle = _resolve(_string(block, "bundle", path, required=True), base_dir)
         if kind == "okf_index":
             from astromesh_context.sources.okf import OKFIndexSource
 
+            if block.get("pinned", True) is not True:
+                raise SpecError(f"{path}.pinned", "okf_index is always pinned")
             idx_path = _string(block, "path", path)
             source = OKFIndexSource(bundle, **({"path": idx_path} if idx_path else {}), **named)
         else:
@@ -273,7 +282,12 @@ def load_engine(
 ) -> ContextEngine:
     """Build a ContextEngine from a ``kind: ContextPolicy`` YAML file."""
     file = Path(path)
-    raw = yaml.safe_load(file.read_text(encoding="utf-8"))
+    try:
+        raw = yaml.safe_load(file.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise SpecError("", f"cannot read {file}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise SpecError("", f"invalid YAML in {file}: {exc}") from exc
     if not isinstance(raw, Mapping):
         raise SpecError("", "top level must be a mapping")
     return load_engine_dict(raw, base_dir=file.parent, complete=complete, objects=objects)
