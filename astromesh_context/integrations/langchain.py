@@ -10,13 +10,12 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
-import copy
 import inspect
 import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from astromesh_context.integrations._base import require
+from astromesh_context.integrations._base import require, with_adapter
 
 _middleware = require("langchain.agents.middleware", "langchain")
 _messages = require("langchain_core.messages", "langchain")
@@ -86,21 +85,17 @@ def _last_human_text(messages: list[BaseMessage]) -> str | None:
     return None
 
 
-def _with_adapter(obj: Any, adapter: Any) -> Any:
-    if obj is None:
-        return None
-    clone = copy.copy(obj)
-    clone.adapter = adapter
-    return clone
-
-
 class ContextMiddleware(AgentMiddleware):
     """Offload and compact the thread before each model call; optionally build the system prompt.
 
     ``compactor`` and ``offloader`` are used with a ``LangChainAdapter`` (copies are made, so the
     objects you pass in are not modified and an offloader keeps sharing its store with
     ``offload_tools``). When ``engine`` is set, the window built from the last human message
-    replaces the request's system message; with no human message the engine is skipped.
+    is appended to the request's system message after a blank line (it is the whole system
+    message when there is none); with no human message the engine is skipped.
+
+    Use ``ainvoke`` / ``astream`` in async code. The sync hooks run the coroutines on a worker
+    thread with its own event loop, so resources bound to the caller's loop will not work there.
     """
 
     def __init__(
@@ -113,8 +108,8 @@ class ContextMiddleware(AgentMiddleware):
         super().__init__()
         self.engine = engine
         adapter = LangChainAdapter()
-        self.compactor = _with_adapter(compactor, adapter)
-        self.offloader = _with_adapter(offloader, adapter)
+        self.compactor = with_adapter(compactor, adapter)
+        self.offloader = with_adapter(offloader, adapter)
 
     @staticmethod
     def _update(old: list[BaseMessage], new: list[BaseMessage]) -> dict[str, Any] | None:
@@ -140,7 +135,9 @@ class ContextMiddleware(AgentMiddleware):
     def _with_window(request: Any, window_text: str) -> Any:
         if not window_text:
             return request
-        return request.override(system_message=SystemMessage(content=window_text))
+        current = request.system_prompt
+        text = "\n\n".join([current, window_text]) if current else window_text
+        return request.override(system_message=SystemMessage(content=text))
 
     def wrap_model_call(self, request: Any, handler: Callable[[Any], Any]) -> Any:
         query = _last_human_text(request.messages) if self.engine else None

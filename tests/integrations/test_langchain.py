@@ -135,3 +135,24 @@ def test_offload_tools_are_langchain_tools():
     read, grep = offload_tools(Offloader())
     assert (read.name, grep.name) == ("ctx_read", "ctx_grep")
     assert "stored" in read.description.lower()
+
+
+async def test_engine_window_follows_the_user_system_prompt():
+    engine = ContextEngine([StaticSource("PINNED-RULE-42", pinned=True)], budget=500)
+    m = model()
+    agent = create_agent(
+        m, tools=[], system_prompt="USER-RULE", middleware=[ContextMiddleware(engine)]
+    )
+    await agent.ainvoke({"messages": [HumanMessage(content="hello")]})
+    system = m.seen[0][0].content
+    assert "USER-RULE" in system
+    assert "PINNED-RULE-42" in system
+    assert system.index("USER-RULE") < system.index("PINNED-RULE-42")
+
+
+def test_sync_invoke_builds_the_window():
+    engine = ContextEngine([StaticSource("PINNED-RULE-42", pinned=True)], budget=500)
+    m = model()
+    agent = create_agent(m, tools=[], middleware=[ContextMiddleware(engine)])
+    agent.invoke({"messages": [HumanMessage(content="hello")]})
+    assert "PINNED-RULE-42" in m.seen[0][0].content

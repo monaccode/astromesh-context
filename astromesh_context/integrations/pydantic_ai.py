@@ -9,13 +9,12 @@ names are preserved.
 
 from __future__ import annotations
 
-import copy
 import dataclasses
 import inspect
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from astromesh_context.integrations._base import require
+from astromesh_context.integrations._base import require, with_adapter
 
 _pai = require("pydantic_ai", "pydantic-ai")
 _msgs = require("pydantic_ai.messages", "pydantic-ai")
@@ -81,10 +80,7 @@ class PydanticAIAdapter:
         return None
 
     def is_summary(self, m: Any) -> bool:
-        if not isinstance(m, ModelRequest) or len(m.parts) != 1:
-            return False
-        part = m.parts[0]
-        return isinstance(part, SystemPromptPart) and part.content.startswith(SUMMARY_MARKER)
+        return isinstance(m, ModelRequest) and bool(m.parts) and all(map(_is_summary_part, m.parts))
 
     def make_summary(self, text: str) -> Any:
         return ModelRequest(parts=[SystemPromptPart(content=f"{SUMMARY_MARKER}\n{text}")])
@@ -117,12 +113,37 @@ class PydanticAIAdapter:
         return dataclasses.replace(m, parts=parts)
 
 
-def _with_adapter(obj: Any, adapter: Any) -> Any:
-    if obj is None:
-        return None
-    clone = copy.copy(obj)
-    clone.adapter = adapter
-    return clone
+def _is_summary_part(part: Any) -> bool:
+    return isinstance(part, SystemPromptPart) and part.content.startswith(SUMMARY_MARKER)
+
+
+def _split_leading_system(messages: list[Any]) -> list[Any]:
+    """Split the leading request into runs of system prompt, summary and other parts.
+
+    PydanticAI puts the system prompt in the same request as the first user prompt, and merges
+    adjacent requests (system prompt + summary) into one on later runs. Without the split the
+    compactor would age the system prompt into the summary, or fail to recognize a summary.
+    """
+    if not messages or not isinstance(messages[0], ModelRequest):
+        return messages
+    first = messages[0]
+    runs: list[list[Any]] = []
+    kinds: list[str] = []
+    for part in first.parts:
+        if _is_summary_part(part):
+            kind = "summary"
+        elif isinstance(part, SystemPromptPart):
+            kind = "system"
+        else:
+            kind = "other"
+        if kinds and kinds[-1] == kind:
+            runs[-1].append(part)
+        else:
+            runs.append([part])
+            kinds.append(kind)
+    if len(runs) == 1:
+        return messages
+    return [*(dataclasses.replace(first, parts=run) for run in runs), *messages[1:]]
 
 
 def history_processor(
@@ -134,13 +155,13 @@ def history_processor(
     stays shared with ``offload_tools``.
     """
     adapter = PydanticAIAdapter()
-    comp = _with_adapter(compactor, adapter)
-    off = _with_adapter(offloader, adapter)
+    comp = with_adapter(compactor, adapter)
+    off = with_adapter(offloader, adapter)
 
     async def process(messages: list[Any]) -> list[Any]:
         out = off.offload(list(messages)) if off else list(messages)
         if comp:
-            out = await comp.compact(out)
+            out = await comp.compact(_split_leading_system(out))
         return out
 
     return process

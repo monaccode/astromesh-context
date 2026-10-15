@@ -51,6 +51,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- The `mcp` extra now requires `mcp>=2.3` (FastMCP was renamed to `MCPServer` in 2.x); the
+  LangChain middleware appends the engine window to the existing system prompt instead of
+  replacing it.
 - Near-duplicate detection uses the containment coefficient over 5-word shingles instead of
   Jaccard, so a retrieval chunk matches the document it was cut from; texts with no words
   never near-match.

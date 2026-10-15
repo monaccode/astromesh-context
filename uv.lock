@@ -96,7 +96,7 @@ requires-dist = [
     { name = "httpx", marker = "extra == 'llm'", specifier = ">=0.27" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=1.0" },
     { name = "langchain-core", marker = "extra == 'langchain'", specifier = ">=1.6" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.28" },
+    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=2.3" },
     { name = "pydantic-ai-slim", marker = "python_full_version >= '3.11' and extra == 'pydantic-ai'", specifier = ">=2.55" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "tiktoken", marker = "extra == 'tiktoken'", specifier = ">=0.7" },

@@ -109,3 +109,28 @@ def test_offload_tools_are_pydantic_ai_tools():
     read, grep = offload_tools(Offloader())
     assert (read.name, grep.name) == ("ctx_read", "ctx_grep")
     assert "stored" in read.description.lower()
+
+
+async def test_system_prompt_survives_compaction():
+    async def summarize(msgs):
+        return "SUMMARY-OF-OLD-TURNS"
+
+    comp = Compactor(summarize, threshold_tokens=50, keep_last=2, adapter=PydanticAIAdapter())
+    seen: list = []
+
+    def fn(messages, info: AgentInfo):
+        seen.append(list(messages))
+        return ModelResponse(parts=[TextPart("x" * 80)])
+
+    agent = Agent(
+        FunctionModel(fn),
+        system_prompt="SYS-RULE",
+        capabilities=[ProcessHistory(history_processor(compactor=comp))],
+    )
+    result = await agent.run("first " + "q" * 80)
+    for i in range(3):
+        result = await agent.run(f"turn {i} " + "q" * 80, message_history=result.all_messages())
+    last = seen[-1]
+    assert str(last).count("[context summary]") == 1
+    assert "SUMMARY-OF-OLD-TURNS" in str(last)
+    assert "SYS-RULE" in str(last)
