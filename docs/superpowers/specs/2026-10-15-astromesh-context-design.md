@@ -153,13 +153,15 @@ class Source(Protocol):
     async def candidates(self, query: str, ctx: BuildContext) -> list[ContextItem]: ...
 
 class Scorer(Protocol):
-    async def score(self, query: str, items: Sequence[ContextItem]) -> list[float]: ...
+    async def score(self, query: str, items: Sequence[ScoredItem]) -> list[ScoredItem]: ...
 
 class Policy(Protocol):
     def select(self, items: Sequence[ScoredItem], budget: Budget) -> Selection: ...
 ```
 
-A sync `candidates` is accepted and run in a thread. `BuildContext` carries the budget, a
+`Scorer.score` receives the calibrated items and returns them re-scored (`final` updated, its own
+adjustment, e.g. `llm=<s>`, appended to `adjustments`), so the trace records the blend and the engine
+does not need to know it. A sync `candidates` is accepted and run in a thread. `BuildContext` carries the budget, a
 deadline and free-form `vars` for sources that need them (session id, user id).
 
 `Window` holds `items` (ordered), `tokens_used`, `budget`, `trace` and `stable_prefix_hash`,
@@ -172,7 +174,7 @@ events (`source_error`, `scorer_fallback`). `trace.explain()` renders it as a ta
 ### 2.2 Calibration
 
 Per source, each item gets `cal = 0.5 · rank_score + 0.5 · minmax(raw)`, where
-`rank_score = 1 − rank / n` (rank 0 is best). Sources with no numeric score (OKF `find`) set
+`rank_score = 1 − rank / n` (rank 0 is best). Sources with no numeric score set
 `score` to `−rank`, and the formula reduces to rank. Alternatives `minmax` and `zscore` are
 selectable per source.
 
@@ -280,7 +282,7 @@ values raise `SpecError` with the field path.
 |---|---|---|---|---|
 | `RAGSource(pipeline, k=20)` | `[rag]` | one item per `Hit` from `QueryPipeline.query()` | `hit.score`; `hit.details` copied to `meta` | knowledge / volatile |
 | `OKFIndexSource(bundle, path="/")` | `[okf]` | `Bundle.index(path)` as one **pinned** item | — | instruction / stable |
-| `OKFSource(bundle, limit=10)` | `[okf]` | concepts from `Bundle.find(text=query)`, each read in full with `Bundle.read()` | `−rank` (header hits before body hits) | knowledge / volatile, `Signals` mapped from `trust`, `stale`, `status` |
+| `OKFSource(bundle, limit=10)` | `[okf]` | concepts walked from the bundle with okf's rules and parsed with the public `parse_concept`, ranked by the source's own BM25 over title/description/tags (weight 2) and body (weight 1) | BM25 score | knowledge / volatile, `Signals` mapped from `trust`, `stale`, `status` |
 | `HistorySource(messages)` | — | one item per turn; tool call + result kept as one item | recency | history / session; default `min_items=2` |
 | `StaticSource(text, …)` | — | one item | given | configurable |
 | `CallableSource(fn, …)` | — | whatever `fn(query, ctx)` returns | given | configurable |
@@ -294,7 +296,9 @@ adapter belongs to the core migration, not here.
 
 ### 3.2 `Compactor(summarize, threshold_tokens, keep_last=6, tokenizer=None)`
 
-- Input and output: a list of OpenAI- or Anthropic-style messages.
+- Input and output: a list of messages. The Compactor works through a `MessageAdapter` protocol
+  (role, text, tool-call ids, rebuild-with-text); adapters ship for OpenAI and Anthropic dicts and
+  PydanticAI `ModelMessage` objects, so no conversion to dicts is lossy.
 - Below threshold: returned unchanged (same object).
 - Above: messages before the cut become one `summary` message; the last `keep_last` stay
   verbatim. The cut moves earlier until it does not separate an assistant tool call from its
@@ -308,7 +312,7 @@ adapter belongs to the core migration, not here.
 
 ### 3.3 `Offloader(store, max_tokens=1500, preview_tokens=200)`
 
-- Scans tool-result messages; any over `max_tokens` is written to `store` and replaced by:
+- Works through the same `MessageAdapter` as the Compactor. Scans tool-result messages; any over `max_tokens` is written to `store` and replaced by:
   the first `preview_tokens`, the handle, the total size, and one line telling the model to
   use `ctx_read` / `ctx_grep`.
 - `ctx_read(handle, offset=0, limit=2000)` returns a character slice; `ctx_grep(handle,
@@ -319,9 +323,9 @@ adapter belongs to the core migration, not here.
 
 ### 3.4 Integrations (v0.1)
 
-- **LangChain/LangGraph:** `context_node(engine)` for a graph node before the model;
-  `compactor_hook` / `offloader_hook` for `pre_model_hook`; `offload_tools(store)` as
-  LangChain tools.
+- **LangChain/LangGraph (1.x):** `context_node(engine)` for a graph node before the model; an
+  `AgentMiddleware` (`ContextMiddleware`) wrapping the compactor and offloader, replacing the
+  pre-1.0 `pre_model_hook`; `offload_tools(store)` as LangChain tools.
 - **PydanticAI:** `history_processor(compactor=…, offloader=…)`; `ctx_read`/`ctx_grep` as tools.
 - **MCP:** `astromesh-context mcp --config policy.yaml` serving `ctx_build(query)`,
   `ctx_read`, `ctx_grep`.
