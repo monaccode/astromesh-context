@@ -16,6 +16,7 @@ DATA = resources.files("astromesh_context.eval") / "data" / "nimbus"
 PINNED = {
     "corpus.jsonl": "44d13cfb3a0f6eeac8e25c54c628b809e56b205355f4071c09a1942a198078da",
     "queries.jsonl": "3619ce0b66c0ed5736988aa6be333378b456c8acc5221e7c5ad50ff4c5043d4c",
+    "answers.jsonl": "1901bf481f5cdc30d70bf7e8bfdd8af888816c355496cb1a4d12b67bf268f4b5",
 }
 
 

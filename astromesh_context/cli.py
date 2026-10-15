@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from astromesh_context.errors import ContextError, MissingExtraError
 
@@ -25,6 +27,9 @@ def _embedder(kind: str):
     return HashEmbedder()
 
 
+_REQUIRED_ENV = ("CTX_EVAL_BASE_URL", "CTX_EVAL_API_KEY", "CTX_EVAL_MODEL")
+
+
 def _parse_budgets(text: str) -> list[int]:
     try:
         budgets = [int(p) for p in text.split(",") if p.strip()]
@@ -35,6 +40,24 @@ def _parse_budgets(text: str) -> list[int]:
     return budgets
 
 
+def _level2(env: dict[str, str]):
+    """The answer and judge callables plus the report meta; the key never reaches the meta."""
+    from astromesh_context.scorer import openai_chat, openai_compatible
+
+    base_url, api_key, model = (env[n] for n in _REQUIRED_ENV)
+    judge_model = env.get("CTX_EVAL_JUDGE_MODEL") or model
+    meta = {
+        "answer_model": model,
+        "judge_model": judge_model,
+        "endpoint_host": urlparse(base_url).hostname,
+    }
+    return (
+        openai_chat(base_url, api_key, model),
+        openai_compatible(base_url, api_key, judge_model),
+        meta,
+    )
+
+
 def _eval(args: argparse.Namespace) -> int:
     from astromesh_context.eval.dataset import nimbus
     from astromesh_context.eval.runner import ContextEval, default_configs
@@ -42,8 +65,29 @@ def _eval(args: argparse.Namespace) -> int:
     dataset = nimbus()
     if args.subset is not None:
         dataset = dataset.subset(args.subset)
+    extra: dict = {}
+    models: dict = {}
+    if args.level == 2:
+        missing = [n for n in _REQUIRED_ENV if not os.environ.get(n)]
+        if missing:
+            print(f"error: set {', '.join(missing)}", file=sys.stderr)
+            return 2
+        answer, judge, extra = _level2(dict(os.environ))
+        models = {"answer": answer, "judge": judge}
     configs = default_configs(_embedder(args.embedder))
-    report = asyncio.run(ContextEval(dataset, configs, args.budgets, level=args.level).run())
+    try:
+        report = asyncio.run(
+            ContextEval(dataset, configs, args.budgets, level=args.level, **models).run()
+        )
+    except Exception as exc:
+        if args.level == 2 and type(exc).__module__.startswith("httpx"):
+            # httpx messages carry the request URL; keep the endpoint out of the output
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            raise ContextError(
+                f"model call failed ({type(exc).__name__}{f' {status}' if status else ''})"
+            ) from None
+        raise
+    report.meta.update(extra)
     report.meta["command"] = "astromesh-context " + " ".join(args.argv)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -69,7 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     ev = sub.add_parser("eval", help="compare policies on the Nimbus corpus")
-    ev.add_argument("--level", type=int, choices=[1], default=1)
+    ev.add_argument("--level", type=int, choices=[1, 2], default=1)
     ev.add_argument("--budgets", type=_parse_budgets, default=[750, 1000, 2000])
     ev.add_argument("--embedder", choices=["hash", "st"], default="hash")
     ev.add_argument("--subset", type=int, default=None, help="use only the first N questions")

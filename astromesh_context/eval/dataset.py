@@ -63,6 +63,10 @@ def _read_lines(name: str) -> list[dict]:
     return [json.loads(line) for line in text.splitlines() if line.strip()]
 
 
+def _references() -> dict[str, str]:
+    return {a["id"]: a["reference"] for a in _read_lines("answers.jsonl")}
+
+
 def _sha256(name: str) -> str:
     return hashlib.sha256((data_dir() / name).read_bytes()).hexdigest()
 
@@ -92,6 +96,7 @@ def nimbus(history_turns: int = 4) -> EvalDataset:
         d["id"] for d in docs if _POLICY.match(d["id"]) and d["id"].endswith("-2024")
     )
     noise = frozenset(d["id"] for d in docs if d.get("metadata", {}).get("trap") == "noise")
+    references = _references()
     cases = [
         EvalCase(
             id=q["id"],
@@ -99,7 +104,7 @@ def nimbus(history_turns: int = 4) -> EvalDataset:
             relevant=frozenset(q["relevant"]),
             type=q["type"],
             history=_history(i, history_turns),
-            reference=None,
+            reference=references[q["id"]],
         )
         for i, q in enumerate(_read_lines("queries.jsonl"))
     ]
@@ -113,6 +118,7 @@ def nimbus(history_turns: int = 4) -> EvalDataset:
         meta={
             "corpus_sha256": _sha256("corpus.jsonl"),
             "queries_sha256": _sha256("queries.jsonl"),
+            "answers_sha256": _sha256("answers.jsonl"),
             "history_turns": history_turns,
         },
     )

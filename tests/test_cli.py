@@ -23,9 +23,9 @@ def test_cli_eval_writes_files(tmp_path, capsys):
     assert "scored_knapsack" in capsys.readouterr().out
 
 
-def test_cli_rejects_level_2(tmp_path):
+def test_cli_rejects_level_3(tmp_path):
     with pytest.raises(SystemExit):
-        main(["eval", "--level", "2", "--out", str(tmp_path)])
+        main(["eval", "--level", "3", "--out", str(tmp_path)])
 
 
 def test_cli_explain(tmp_path, capsys):

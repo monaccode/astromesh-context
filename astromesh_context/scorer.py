@@ -119,3 +119,31 @@ def openai_compatible(
             return response.json()["choices"][0]["message"]["content"]
 
     return complete
+
+
+def openai_chat(
+    base_url: str, api_key: str, model: str, *, timeout: float = 30.0
+) -> Callable[[list[dict]], Awaitable[dict]]:
+    """A chat call over a whole message list: ``{"content": str, "usage": dict}``."""
+    try:
+        import httpx
+    except ImportError as exc:
+        raise MissingExtraError("install astromesh-context[llm]") from exc
+
+    url = base_url.rstrip("/") + "/chat/completions"
+
+    async def chat(messages: list[dict]) -> dict:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                url,
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={"model": model, "messages": messages, "temperature": 0},
+            )
+            response.raise_for_status()
+            body = response.json()
+            return {
+                "content": body["choices"][0]["message"]["content"],
+                "usage": body.get("usage") or {},
+            }
+
+    return chat

@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+import statistics
 import tempfile
+import time
 import weakref
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -15,6 +17,7 @@ from typing import Any
 from astromesh_context.engine import ContextEngine
 from astromesh_context.errors import MissingExtraError
 from astromesh_context.eval.dataset import EvalCase, EvalDataset, nimbus_bundle
+from astromesh_context.eval.judge import grade_answer
 from astromesh_context.eval.metrics import (
     distractor_rate,
     noise_share,
@@ -51,6 +54,13 @@ _COLUMNS = (
     ("prefix_reuse", "prefix reuse"),
     ("stable_tokens", "stable tokens"),
 )
+_LEVEL2_COLUMNS = (
+    ("accuracy", "accuracy"),
+    ("judge_unparsed", "judge unparsed"),
+    ("latency_ms", "latency ms (p50)"),
+    ("prompt_tokens", "prompt tokens"),
+    ("completion_tokens", "completion tokens"),
+)
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -63,12 +73,14 @@ class Report:
     meta: dict[str, Any] = field(default_factory=dict)
 
     def to_markdown(self) -> str:
-        head = "| " + " | ".join(label for _, label in _COLUMNS) + " |"
-        rule = "|" + "|".join("---" for _ in _COLUMNS) + "|"
+        level2 = bool(self.rows) and "accuracy" in self.rows[0]
+        columns = _COLUMNS + _LEVEL2_COLUMNS if level2 else _COLUMNS
+        head = "| " + " | ".join(label for _, label in columns) + " |"
+        rule = "|" + "|".join("---" for _ in columns) + "|"
         lines = [head, rule]
         for row in self.rows:
             cells = []
-            for key, _ in _COLUMNS:
+            for key, _ in columns:
                 v = row[key]
                 cells.append(f"{v:.3f}" if isinstance(v, float) else str(v))
             lines.append("| " + " | ".join(cells) + " |")
@@ -106,8 +118,10 @@ class ContextEval:
         answer: Callable | None = None,
         judge: Callable | None = None,
     ) -> None:
-        if level != 1:
-            raise ValueError(f"only level 1 is available, got level {level!r}")
+        if level not in (1, 2):
+            raise ValueError(f"level must be 1 or 2, got level {level!r}")
+        if level == 2 and (answer is None or judge is None):
+            raise ValueError("level 2 needs an answer model and a judge model (answer=, judge=)")
         self.dataset = dataset
         self.configs = dict(configs)
         self.budgets = list(budgets)
@@ -126,10 +140,28 @@ class ContextEval:
         tokens: list[float] = []
         stable: list[float] = []
         reuse: list[float] = []
+        scores: list[float] = []
+        unparsed = 0
+        latencies: list[float] = []
+        usage: list[tuple[int, int]] = []
         for session in _sessions(ds.cases):
             hashes: list[str] = []
             for case, history in zip(session, _session_histories(session), strict=True):
+                started = time.perf_counter()
                 window = await engine.build(case.query, vars={"history": history})
+                if self.level == 2:
+                    reply = await self.answer(window.to_messages())  # type: ignore[misc]
+                    latencies.append((time.perf_counter() - started) * 1000)
+                    used = reply.get("usage") or {}
+                    usage.append((used.get("prompt_tokens", 0), used.get("completion_tokens", 0)))
+                    score, parsed = await grade_answer(
+                        self.judge,  # type: ignore[arg-type]
+                        case.query,
+                        case.reference or "",
+                        reply["content"],
+                    )
+                    scores.append(score)
+                    unparsed += not parsed
                 doc_ids = {d for d in map(ds.doc_id_of, window.items) if d is not None}
                 recalls.append(recall_at_budget(doc_ids, case.relevant))
                 precisions.append(precision_per_token(window.items, ds.doc_id_of, case.relevant))
@@ -142,7 +174,7 @@ class ContextEval:
                 )
                 hashes.append(window.stable_prefix_hash)
             reuse.append(prefix_reuse(hashes))
-        return {
+        row: dict[str, Any] = {
             "config": name,
             "budget": budget,
             "recall": _mean(recalls),
@@ -155,6 +187,15 @@ class ContextEval:
             "prefix_reuse": _mean(reuse),
             "stable_tokens": _mean(stable),
         }
+        if self.level == 2:
+            row.update(
+                accuracy=_mean(scores),
+                judge_unparsed=unparsed,
+                latency_ms=round(statistics.median(latencies), 1) if latencies else 0.0,
+                prompt_tokens=_mean([p for p, _ in usage]),
+                completion_tokens=_mean([c for _, c in usage]),
+            )
+        return row
 
     async def run(self) -> Report:
         rows = [
@@ -166,6 +207,7 @@ class ContextEval:
             "level": self.level,
             "corpus_sha256": self.dataset.meta.get("corpus_sha256"),
             "queries_sha256": self.dataset.meta.get("queries_sha256"),
+            "answers_sha256": self.dataset.meta.get("answers_sha256"),
             "cases": len(self.dataset.cases),
             "configs": list(self.configs),
             "budgets": self.budgets,

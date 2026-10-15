@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `ContextEval` level 2 (`--level 2`): answers each window with a chat model and grades it against
+  hand-written references (`answers.jsonl`) with an LLM judge; adds `accuracy`, `judge_unparsed`,
+  p50 `latency_ms` and token columns, plus `openai_chat` and `judge_answer`. References are drafts
+  pending review.
 - Eval metrics `superseded_rate` and `noise_share`, a `candidate_tokens` column, and
   `config_meta` in the JSON report; the CLI default budgets are now 750, 1000 and 2000.
 - The Nimbus OKF bundle marks each deprecated policy `superseded_by` its 2026 version.
