@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Integrations: `ContextMiddleware` for LangChain 1.x (`astromesh-context[langchain]`),
+  `history_processor` for PydanticAI (`[pydantic-ai]`) and an MCP server with `ctx_build`,
+  `ctx_read` and `ctx_grep` (`[mcp]`, `astromesh-context mcp --config policy.yaml`); each has
+  `offload_tools` and a message adapter (`LangChainAdapter`, `PydanticAIAdapter`).
 - `ContextEval` level 2 (`--level 2`): answers each window with a chat model and grades it against
   hand-written references (`answers.jsonl`) with an LLM judge; adds `accuracy`, `judge_unparsed`,
   p50 `latency_ms` and token columns, plus `openai_chat` and `judge_answer`. References are drafts

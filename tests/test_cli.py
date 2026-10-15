@@ -41,6 +41,34 @@ def test_cli_explain(tmp_path, capsys):
     assert "reason" in out
 
 
+def test_cli_mcp_serves_the_policy(tmp_path, monkeypatch):
+    pytest.importorskip("mcp")
+    from astromesh_context.integrations import mcp as mcp_mod
+
+    cfg = tmp_path / "p.yaml"
+    cfg.write_text(
+        "apiVersion: astromesh/v1\nkind: ContextPolicy\nspec:\n  budget: 500\n  sources:\n"
+        "    - { type: static, text: 'You are Nimbus support.', pinned: true }\n",
+        encoding="utf-8",
+    )
+    ran = []
+
+    class FakeServer:
+        def run(self):
+            ran.append(True)
+
+    seen = {}
+
+    def fake_serve(engine, offloader=None, name="astromesh-context"):
+        seen["budget"], seen["name"] = engine.budget_total, name
+        return FakeServer()
+
+    monkeypatch.setattr(mcp_mod, "serve", fake_serve)
+    assert main(["mcp", "--config", str(cfg)]) == 0
+    assert ran == [True]
+    assert seen == {"budget": 500, "name": "astromesh-context"}
+
+
 def test_cli_explain_bad_config(tmp_path, capsys):
     cfg = tmp_path / "bad.yaml"
     cfg.write_text("kind: nope\n", encoding="utf-8")

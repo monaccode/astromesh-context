@@ -108,6 +108,14 @@ def _explain(args: argparse.Namespace) -> int:
     return 0
 
 
+def _mcp(args: argparse.Namespace) -> int:
+    from astromesh_context.integrations.mcp import serve
+    from astromesh_context.spec import load_engine
+
+    serve(load_engine(args.config), name=args.name).run()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="astromesh-context")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -124,6 +132,11 @@ def build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--config", required=True, help="a kind: ContextPolicy YAML file")
     ex.add_argument("--query", required=True)
     ex.set_defaults(run=_explain)
+
+    mc = sub.add_parser("mcp", help="serve a policy's ctx_build tool over MCP (stdio)")
+    mc.add_argument("--config", required=True, help="a kind: ContextPolicy YAML file")
+    mc.add_argument("--name", default="astromesh-context", help="server name")
+    mc.set_defaults(run=_mcp)
 
     return parser
 
