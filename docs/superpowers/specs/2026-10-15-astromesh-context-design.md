@@ -228,9 +228,8 @@ All three apply calibration, dedupe and ordering identically; they differ only i
 2. Per-source `min_items` (e.g. history: the last user/assistant pair), best first, if they fit.
 3. Remaining items by density `final / tokens^beta`, descending; add if it fits and the
    source is under its `max_tokens` cap and `final ≥ min_score`. Otherwise excluded with
-   `budget`, `source_cap` or `below_floor`.
-4. Back-fill: one pass over excluded-for-`budget` items in density order, adding any that now
-   fit.
+   `budget`, `source_cap` or `below_floor`. An item that does not fit is skipped and the scan
+   continues, so a smaller item further down can still use the room left.
 
 The default `beta=0` is pure calibrated-score order: on the Nimbus eval, density weighting
 (`beta=0.5`) favored short noise over long relevant documents. `beta` stays a parameter and the

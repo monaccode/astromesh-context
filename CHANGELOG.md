@@ -60,6 +60,8 @@ All notable changes to this project are documented here. The format follows
 - Near-duplicate detection uses the containment coefficient over 5-word shingles instead of
   Jaccard, so a retrieval chunk matches the document it was cut from; texts with no words
   never near-match.
+- `ScoredKnapsack` no longer runs a back-fill pass after the density scan: it could never add
+  an item (used tokens only grow), so selection is unchanged.
 - `ScoredKnapsack` defaults to `beta=0.0` (calibrated-score order); `beta=0.5` density
   weighting favored short noise over long relevant documents on the Nimbus eval.
 

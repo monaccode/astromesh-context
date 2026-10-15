@@ -99,8 +99,8 @@ def test_knapsack_below_floor():
     assert reasons(sel) == {"lo": "below_floor"}
 
 
-def test_knapsack_backfill():
-    # b is denser than c but does not fit after a; c fits in the leftover space.
+def test_knapsack_skips_what_does_not_fit_and_continues():
+    # b ranks above c but does not fit after a; c still fits in the leftover space.
     items = [si("a", 0.9, 60), si("b", 0.7, 50), si("c", 0.2, 40)]
     sel = ScoredKnapsack().select(items, Budget(100))
     assert ids(sel.included) == ["a", "c"]

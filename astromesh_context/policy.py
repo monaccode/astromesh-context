@@ -75,7 +75,6 @@ class ScoredKnapsack:
         # 2. Density order.
         remaining = [s for s in rest if s.item.id not in forced]
         remaining.sort(key=lambda s: (-s.final / s.tokens**self.beta, s.item.id))
-        over_budget: list[ScoredItem] = []
         for s in remaining:
             cap = budget.caps.get(s.item.source)
             if self.min_score is not None and s.final < self.min_score:
@@ -83,16 +82,9 @@ class ScoredKnapsack:
             elif cap is not None and per_source.get(s.item.source, 0) + s.tokens > cap:
                 excluded.append((s, "source_cap"))
             elif used + s.tokens > budget.total:
-                over_budget.append(s)
+                excluded.append((s, "budget"))  # skipped; smaller items after it may still fit
             else:
                 add(s)
-
-        # 3. Back-fill: one pass over budget exclusions, in the same order.
-        for s in over_budget:
-            if used + s.tokens <= budget.total:
-                add(s)
-            else:
-                excluded.append((s, "budget"))
         return Selection(included, excluded)
 
 
