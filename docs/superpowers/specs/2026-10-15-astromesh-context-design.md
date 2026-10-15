@@ -207,6 +207,12 @@ Every adjustment is recorded in the trace entry.
 
 The higher `final` wins; the other is excluded with `duplicate_of:<id>`. Pinned items always win.
 
+**Signal merge.** A dropped copy does not take its signals with it: they are merged into the
+kept item. `deprecated` and `stale` are OR-ed; `trust` and `citation` are taken from the dropped
+item only when the kept one has none. Each inherited signal adds an adjustment
+`inherited:<signal>:<dropped id>` to the kept item's trace entry. So when a retrieval hit
+outranks the OKF copy of a deprecated policy, the kept hit is still excluded as `deprecated`.
+
 ### 2.5 Policies
 
 All three apply calibration, dedupe and ordering identically; they differ only in `select`.
@@ -362,7 +368,7 @@ runtime errors degrade and are recorded.
 builds three sources from it:
 
 - an **OKF bundle** generated from the 30 policy documents, with every `pol-*-2024` marked
-  `status: deprecated` and pointing to its 2026 version;
+  `status: deprecated`, `superseded_by: <2026 id>` and a closing link to its 2026 version;
 - a **hybrid `RAGSource`** over all 200 documents (`HashEmbedder` for level 1; a real
   embedder for level 2);
 - a **synthetic history** of N prior turns per question, for prefix reuse and history pressure.
@@ -371,8 +377,12 @@ builds three sources from it:
 
 - `recall@budget`: fraction of `relevant` docs present in the window.
 - `precision_per_token`: tokens from relevant docs / window tokens.
-- `distractor_rate`: windows containing a superseded policy or a `noise` doc.
-- `tokens_per_call`.
+- `distractor_rate`: windows containing a superseded policy or a `noise` doc. It saturates at
+  generous budgets, so two finer metrics sit beside it: `superseded_rate` (windows with any
+  `pol-*-2024` doc) and `noise_share` (tokens from `noise` docs / window tokens, averaged).
+- `tokens_per_call`, and `candidate_tokens`: the mean size of the whole candidate pool (sum of
+  tokens over every trace entry). Budgets must sit below the pool, or every policy selects
+  the same items; on Nimbus the pool is about 3,200 tokens.
 - `prefix_reuse`: over a simulated multi-turn session, the share of consecutive calls with an
   identical `stable_prefix_hash`, and the stable-block length.
 
@@ -384,11 +394,12 @@ builds three sources from it:
   for v0.1 and is committed alongside the corpus copy.
 
 **The first published table:** `Everything(truncate=True)`, `FixedSlots`, `ScoredKnapsack`,
-`ScoredKnapsack + LLMScorer`, at budgets 2k, 4k and 8k, both levels, with the exact command
+`ScoredKnapsack + LLMScorer`, at budgets 750, 1k and 2k (the pinned system prompt and OKF index alone take 512 tokens, so 500
+cannot be run), both levels, with the exact command
 and model ids. The table reports what comes out, including where `ScoredKnapsack` does not win.
 
 ```python
-report = await ContextEval(dataset=nimbus(), configs={...}, budgets=[2000, 4000, 8000]).run()
+report = await ContextEval(dataset=nimbus(), configs={...}, budgets=[750, 1000, 2000]).run()
 report.to_markdown(); report.to_json()
 ```
 

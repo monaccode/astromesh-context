@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
-import sys
 import tempfile
 import weakref
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -14,12 +13,15 @@ from pathlib import Path
 from typing import Any
 
 from astromesh_context.engine import ContextEngine
+from astromesh_context.errors import MissingExtraError
 from astromesh_context.eval.dataset import EvalCase, EvalDataset, nimbus_bundle
 from astromesh_context.eval.metrics import (
     distractor_rate,
+    noise_share,
     precision_per_token,
     prefix_reuse,
     recall_at_budget,
+    superseded_rate,
 )
 from astromesh_context.policy import Everything, FixedSlots, ScoredKnapsack
 from astromesh_context.scorer import LLMScorer
@@ -30,6 +32,8 @@ SYSTEM_PROMPT = (
 )
 SESSION_SIZE = 5
 ACK = "Entendido."
+SPLIT_SIZE, SPLIT_OVERLAP = 800, 80
+RAG_K, OKF_LIMIT = 20, 10
 FIXED_SHARES = {"okf": 0.3, "rag": 0.5, "history": 0.2}
 
 ConfigFactory = Callable[[EvalDataset, int], Awaitable[ContextEngine]]
@@ -40,7 +44,10 @@ _COLUMNS = (
     ("recall", "recall"),
     ("precision_per_token", "precision/token"),
     ("distractor_rate", "distractor rate"),
+    ("superseded_rate", "superseded rate"),
+    ("noise_share", "noise share"),
     ("tokens_per_call", "tokens/call"),
+    ("candidate_tokens", "candidate tokens"),
     ("prefix_reuse", "prefix reuse"),
     ("stable_tokens", "stable tokens"),
 )
@@ -114,6 +121,8 @@ class ContextEval:
         recalls: list[float] = []
         precisions: list[float] = []
         windows: list[set[str]] = []
+        noise: list[float] = []
+        pool: list[float] = []
         tokens: list[float] = []
         stable: list[float] = []
         reuse: list[float] = []
@@ -125,6 +134,8 @@ class ContextEval:
                 recalls.append(recall_at_budget(doc_ids, case.relevant))
                 precisions.append(precision_per_token(window.items, ds.doc_id_of, case.relevant))
                 windows.append(doc_ids)
+                noise.append(noise_share(window.items, ds.doc_id_of, ds.noise))
+                pool.append(sum(e.tokens for e in window.trace.entries))
                 tokens.append(window.tokens_used)
                 stable.append(
                     sum(it.tokens or 0 for it in window.items if it.stability == "stable")
@@ -137,7 +148,10 @@ class ContextEval:
             "recall": _mean(recalls),
             "precision_per_token": _mean(precisions),
             "distractor_rate": distractor_rate(windows, ds.distractors),
+            "superseded_rate": superseded_rate(windows, ds.superseded),
+            "noise_share": _mean(noise),
             "tokens_per_call": _mean(tokens),
+            "candidate_tokens": _mean(pool),
             "prefix_reuse": _mean(reuse),
             "stable_tokens": _mean(stable),
         }
@@ -155,7 +169,9 @@ class ContextEval:
             "cases": len(self.dataset.cases),
             "configs": list(self.configs),
             "budgets": self.budgets,
-            "command": " ".join(sys.argv),
+            "history_turns": self.dataset.meta.get("history_turns"),
+            "config_meta": {name: getattr(f, "meta", None) for name, f in self.configs.items()},
+            "command": None,  # the CLI fills it in
         }
         return Report(rows, meta)
 
@@ -172,16 +188,19 @@ class _Shared:
     async def get(self, dataset: EvalDataset) -> tuple[Any, Path]:
         async with self._lock:
             if self._pipeline is None:
-                from astromesh_rag.indexes import MemoryIndex
-                from astromesh_rag.patterns.hybrid import hybrid
-                from astromesh_rag.pipeline import IngestPipeline
-                from astromesh_rag.retrievers import BM25Index
-                from astromesh_rag.splitters import RecursiveSplitter
-                from astromesh_rag.types import Document
+                try:
+                    from astromesh_rag.indexes import MemoryIndex
+                    from astromesh_rag.patterns.hybrid import hybrid
+                    from astromesh_rag.pipeline import IngestPipeline
+                    from astromesh_rag.retrievers import BM25Index
+                    from astromesh_rag.splitters import RecursiveSplitter
+                    from astromesh_rag.types import Document
+                except ImportError:
+                    raise MissingExtraError("install astromesh-context[rag]") from None
 
                 index, bm25 = MemoryIndex(), BM25Index()
                 await IngestPipeline(
-                    RecursiveSplitter(800, 80), self._embedder, index, bm25
+                    RecursiveSplitter(SPLIT_SIZE, SPLIT_OVERLAP), self._embedder, index, bm25
                 ).ingest([Document(d["text"], d["id"], d["metadata"]) for d in dataset.docs])
                 self._pipeline = hybrid(self._embedder, index, bm25)
                 tmp = tempfile.mkdtemp(prefix="nimbus-bundle-")
@@ -198,25 +217,38 @@ def default_configs(
     from astromesh_context.sources.rag import RAGSource
 
     shared = _Shared(embedder)
+    common = {
+        "rag_pattern": "hybrid",
+        "rag_k": RAG_K,
+        "okf_limit": OKF_LIMIT,
+        "splitter": {"size": SPLIT_SIZE, "overlap": SPLIT_OVERLAP},
+        "embedder": type(embedder).__name__,
+    }
 
-    def make(policy_factory: Callable[[], Any], with_scorer: bool = False) -> ConfigFactory:
+    def make(policy_cls: type, with_scorer: bool = False, **params: Any) -> ConfigFactory:
         async def factory(dataset: EvalDataset, budget: int) -> ContextEngine:
             pipeline, bundle = await shared.get(dataset)
             sources = [
                 StaticSource(SYSTEM_PROMPT, name="system", pinned=True, stability="stable"),
                 OKFIndexSource(bundle),
-                OKFSource(bundle, limit=10),
-                RAGSource(pipeline, k=20),
+                OKFSource(bundle, limit=OKF_LIMIT),
+                RAGSource(pipeline, k=RAG_K),
                 HistorySource(key="history"),
             ]
             scorer = LLMScorer(complete) if with_scorer and complete is not None else None
-            return ContextEngine(sources, budget=budget, policy=policy_factory(), scorer=scorer)
+            return ContextEngine(sources, budget=budget, policy=policy_cls(**params), scorer=scorer)
 
+        factory.meta = {  # type: ignore[attr-defined]
+            "policy": policy_cls.__name__,
+            **params,
+            **({"scorer": "LLMScorer"} if with_scorer else {}),
+            **common,
+        }
         return factory
 
     configs: dict[str, ConfigFactory] = {
-        "everything": make(lambda: Everything(truncate=True)),
-        "fixed_slots": make(lambda: FixedSlots(FIXED_SHARES)),
+        "everything": make(Everything, truncate=True),
+        "fixed_slots": make(FixedSlots, shares=FIXED_SHARES),
         "scored_knapsack": make(ScoredKnapsack),
     }
     if complete is not None:

@@ -2,10 +2,30 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Sequence
 
 from ._text import content_hash, shingles
 from .types import ScoredItem
+
+
+def _inherit(kept: ScoredItem, dropped: ScoredItem) -> ScoredItem:
+    """Merge the dropped copy's signals into the kept one (flags OR-ed; trust/citation if unset)."""
+    k, d = kept.item.signals, dropped.item.signals
+    changes: dict[str, object] = {}
+    if d.deprecated and not k.deprecated:
+        changes["deprecated"] = True
+    if d.stale and not k.stale:
+        changes["stale"] = True
+    if k.trust is None and d.trust is not None:
+        changes["trust"] = d.trust
+    if k.citation is None and d.citation is not None:
+        changes["citation"] = d.citation
+    if not changes:
+        return kept
+    item = dataclasses.replace(kept.item, signals=dataclasses.replace(k, **changes))
+    notes = tuple(f"inherited:{name}:{dropped.item.id}" for name in changes)
+    return dataclasses.replace(kept, item=item, adjustments=(*kept.adjustments, *notes))
 
 
 def dedupe(
@@ -14,14 +34,16 @@ def dedupe(
     """Drop items repeating a better one; returns (kept in input order, dropped with reason).
 
     Items are visited pinned first, then by ``final`` descending, ties by id, so the strongest
-    copy survives. An item is dropped as ``duplicate_of:<kept id>`` when its id, its normalized
+    copy survives and inherits the dropped copy's signals (``deprecated``/``stale`` OR-ed,
+    ``trust``/``citation`` when unset). An item is dropped as ``duplicate_of:<kept id>`` when its id, its normalized
     content hash, or (Jaccard over 5-word shingles >= ``threshold``) its content matches a kept one.
     """
     order = sorted(items, key=lambda s: (not s.item.pinned, -s.final, s.item.id))
     kept_ids: set[str] = set()
     kept_hashes: dict[str, str] = {}
     kept_shingles: list[tuple[str, frozenset[tuple[str, ...]]]] = []
-    kept: set[int] = set()
+    kept: dict[int, ScoredItem] = {}  # id(original) -> the item with inherited signals
+    kept_key: dict[str, int] = {}  # kept item id -> id(original)
     dropped: dict[int, tuple[ScoredItem, str]] = {}
     for scored in order:
         item = scored.item
@@ -35,12 +57,15 @@ def dedupe(
                     break
         if dup_of is not None:
             dropped[id(scored)] = (scored, f"duplicate_of:{dup_of}")
+            key = kept_key[dup_of]
+            kept[key] = _inherit(kept[key], scored)
             continue
-        kept.add(id(scored))
+        kept[id(scored)] = scored
+        kept_key[item.id] = id(scored)
         kept_ids.add(item.id)
         kept_hashes[digest] = item.id
         kept_shingles.append((item.id, sh))
     return (
-        [s for s in items if id(s) in kept],
+        [kept[id(s)] for s in items if id(s) in kept],
         [dropped[id(s)] for s in order if id(s) in dropped],
     )

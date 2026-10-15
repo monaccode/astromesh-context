@@ -2,9 +2,11 @@ import pytest
 
 from astromesh_context.eval.metrics import (
     distractor_rate,
+    noise_share,
     precision_per_token,
     prefix_reuse,
     recall_at_budget,
+    superseded_rate,
 )
 from astromesh_context.types import ContextItem
 
@@ -55,3 +57,20 @@ def test_prefix_reuse():
     assert prefix_reuse(["x", "y", "z"]) == 0.0
     assert prefix_reuse(["x"]) == 1.0
     assert prefix_reuse([]) == 1.0
+
+
+def test_superseded_rate():
+
+    windows = [{"a"}, {"old"}, {"b", "old"}, set()]
+    assert superseded_rate(windows, frozenset({"old"})) == 0.5
+    assert superseded_rate([], frozenset({"old"})) == 0.0
+
+
+def test_noise_share():
+
+    docs = {"i1": "a", "i2": "n1", "i3": "n2", "i4": None}
+    items = [item("i1", 10), item("i2", 20), item("i3", 10), item("i4", 10)]
+    assert noise_share(items, lambda it: docs[it.id], frozenset({"n1", "n2"})) == pytest.approx(
+        30 / 50
+    )
+    assert noise_share([], lambda it: None, frozenset({"n1"})) == 0.0

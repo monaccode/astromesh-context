@@ -166,3 +166,34 @@ async def test_vars_reach_sources_and_deadline_set():
     await engine.build("q", vars={"a": 1})
     assert seen["vars"] == {"a": 1}
     assert seen["deadline"] > 0
+
+
+async def test_dedupe_inherits_deprecation_and_trace_has_one_entry_per_candidate():
+    from astromesh_context import Signals
+
+    text = "refund window is fourteen days for the old policy " * 3
+    rag = CallableSource(
+        lambda q, ctx: [ContextItem("rag:p", text, "rag", "knowledge", "volatile", score=0.9)],
+        name="rag",
+    )
+    okf = CallableSource(
+        lambda q, ctx: [
+            ContextItem(
+                "okf:p",
+                text,
+                "okf",
+                "knowledge",
+                "volatile",
+                score=0.2,
+                signals=Signals(deprecated=True),
+            )
+        ],
+        name="okf",
+    )
+    window = await ContextEngine([rag, SourceConfig(okf, weight=0.5)], budget=1000).build("refund")
+    assert window.items == []
+    reasons = {e.item_id: e.reason for e in window.trace.entries}
+    assert len(window.trace.entries) == 2
+    assert reasons == {"rag:p": "deprecated", "okf:p": "duplicate_of:rag:p"}
+    kept = next(e for e in window.trace.entries if e.item_id == "rag:p")
+    assert "inherited:deprecated:okf:p" in kept.adjustments

@@ -119,8 +119,10 @@ class ContextEngine:
         selection = self.policy.select(kept, self._budget)
 
         reasons: dict[int, str] = {id(s): r for s, r in dropped}
+        merged = {s.item.id: s for s in kept}  # kept items carry the signals they inherited
         reasons.update({id(s): r for s, r in selection.excluded})
         included_ids = {id(s) for s in selection.included}
+        shown = [s if id(s) in reasons else merged.get(s.item.id, s) for s in scored]
         entries = [
             TraceEntry(
                 item_id=s.item.id,
@@ -133,7 +135,7 @@ class ContextEngine:
                 reason=None if id(s) in included_ids else reasons.get(id(s), "budget"),
                 adjustments=s.adjustments,
             )
-            for s in scored
+            for s in shown
         ]
         items = order_items(selection.included, [c.source.name for c in self.configs])
         return Window(

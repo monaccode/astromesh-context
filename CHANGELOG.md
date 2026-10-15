@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Eval metrics `superseded_rate` and `noise_share`, a `candidate_tokens` column, and
+  `config_meta` in the JSON report; the CLI default budgets are now 750, 1000 and 2000.
+- The Nimbus OKF bundle marks each deprecated policy `superseded_by` its 2026 version.
 - `ContextEval` level 1 and the `astromesh-context` CLI (`eval`, `explain`): compares
   `everything`, `fixed_slots` and `scored_knapsack` on the vendored Nimbus corpus (recall,
   precision per token, distractor rate, tokens, prefix reuse) and writes a dated JSON and
@@ -37,3 +40,8 @@ All notable changes to this project are documented here. The format follows
   human-reviewed and deprecated signal adjustments recorded for the trace.
 - Project skeleton, data model (`ContextItem`, `Signals`, `Budget`, `Trace`, `Window`) and token
   counting (`CharEstimator`, `TiktokenTokenizer`).
+
+### Fixed
+
+- Dedupe merges the dropped copy's signals (`deprecated`, `stale`, `trust`, `citation`) into
+  the kept item, so a deprecation seen only on one copy is no longer lost.

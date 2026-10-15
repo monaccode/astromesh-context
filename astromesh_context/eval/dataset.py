@@ -43,9 +43,11 @@ class EvalCase:
 class EvalDataset:
     cases: list[EvalCase]
     docs: list[dict]
-    distractors: frozenset[str]
+    distractors: frozenset[str]  # superseded | noise
     doc_id_of: Callable[[ContextItem], str | None]
     meta: dict[str, Any] = field(default_factory=dict)
+    superseded: frozenset[str] = frozenset()
+    noise: frozenset[str] = frozenset()
 
     def subset(self, n: int) -> EvalDataset:
         """The first ``n`` cases, same documents."""
@@ -86,12 +88,10 @@ def _history(index: int, turns: int) -> list[dict]:
 
 def nimbus(history_turns: int = 4) -> EvalDataset:
     docs = _read_lines("corpus.jsonl")
-    distractors = frozenset(
-        d["id"]
-        for d in docs
-        if (_POLICY.match(d["id"]) and d["id"].endswith("-2024"))
-        or d.get("metadata", {}).get("trap") == "noise"
+    superseded = frozenset(
+        d["id"] for d in docs if _POLICY.match(d["id"]) and d["id"].endswith("-2024")
     )
+    noise = frozenset(d["id"] for d in docs if d.get("metadata", {}).get("trap") == "noise")
     cases = [
         EvalCase(
             id=q["id"],
@@ -106,11 +106,14 @@ def nimbus(history_turns: int = 4) -> EvalDataset:
     return EvalDataset(
         cases=cases,
         docs=docs,
-        distractors=distractors,
+        distractors=superseded | noise,
+        superseded=superseded,
+        noise=noise,
         doc_id_of=doc_id_of,
         meta={
             "corpus_sha256": _sha256("corpus.jsonl"),
             "queries_sha256": _sha256("queries.jsonl"),
+            "history_turns": history_turns,
         },
     )
 
@@ -141,13 +144,16 @@ def nimbus_bundle(dest: Path) -> Path:
     for doc in policies:
         title = _title(doc["text"])
         front = ["type: Policy", f"title: {_yaml_scalar(title)}"]
+        body = doc["text"]
         if doc["id"].endswith("-2024"):
-            front.append("status: deprecated")
+            newer = doc["id"][: -len("-2024")] + "-2026"
+            front += ["status: deprecated", f"superseded_by: {newer}"]
+            body += f"\n\nReemplazada por [{newer}]({newer}.md)."
         _write(
             dest / "policies" / f"{doc['id']}.md",
-            "---\n" + "\n".join(front) + "\n---\n" + doc["text"] + "\n",
+            "---\n" + "\n".join(front) + "\n---\n" + body + "\n",
         )
-        links.append(f"* [{doc['id']}](policies/{doc['id']}.md) - {title}")
+        links.append(f"* [{doc['id']}](policies/{doc['id']}.md)")
     _write(
         dest / "index.md",
         '---\nokf_version: "0.2"\n---\n# Policies\n\n' + "\n".join(links) + "\n",

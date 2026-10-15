@@ -12,14 +12,16 @@ from astromesh_context.errors import ContextError, MissingExtraError
 
 
 def _embedder(kind: str):
-    try:
-        if kind == "st":
+    if kind == "st":
+        try:
             from astromesh_rag.embedders import SentenceTransformersEmbedder
-
-            return SentenceTransformersEmbedder("all-MiniLM-L6-v2")
+        except ImportError:
+            raise MissingExtraError("install astromesh-context[eval]") from None
+        return SentenceTransformersEmbedder("all-MiniLM-L6-v2")
+    try:
         from astromesh_rag.testing import HashEmbedder
     except ImportError:
-        raise MissingExtraError("install astromesh-context[eval]") from None
+        raise MissingExtraError("install astromesh-context[rag]") from None
     return HashEmbedder()
 
 
@@ -62,13 +64,13 @@ def _explain(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="astromesh-context")
     sub = parser.add_subparsers(dest="command", required=True)
 
     ev = sub.add_parser("eval", help="compare policies on the Nimbus corpus")
     ev.add_argument("--level", type=int, choices=[1], default=1)
-    ev.add_argument("--budgets", type=_parse_budgets, default=[2000, 4000, 8000])
+    ev.add_argument("--budgets", type=_parse_budgets, default=[750, 1000, 2000])
     ev.add_argument("--embedder", choices=["hash", "st"], default="hash")
     ev.add_argument("--subset", type=int, default=None, help="use only the first N questions")
     ev.add_argument("--out", default="eval-results", help="directory for the .json and .md files")
@@ -79,11 +81,15 @@ def main(argv: list[str] | None = None) -> int:
     ex.add_argument("--query", required=True)
     ex.set_defaults(run=_explain)
 
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     args.argv = list(sys.argv[1:] if argv is None else argv)
     try:
         return args.run(args)
-    except ContextError as exc:
+    except (ContextError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

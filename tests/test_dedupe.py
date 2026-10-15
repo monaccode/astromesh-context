@@ -83,3 +83,61 @@ def test_accented_text_dedupes():
 def test_kept_in_input_order():
     a, b, c = si("a", "one", 0.1), si("b", "two", 0.9), si("c", "three", 0.5)
     assert dedupe([a, b, c])[0] == [a, b, c]
+
+
+def sig(id, content, final, pinned=False, **signals):
+    from astromesh_context.types import Signals
+
+    item = ContextItem(
+        id=id,
+        content=content,
+        source="s",
+        kind="knowledge",
+        stability="session",
+        pinned=pinned,
+        signals=Signals(**signals),
+    )
+    return ScoredItem(item, final, final)
+
+
+def test_dropped_deprecated_flag_is_inherited():
+    kept_in = sig("rag:x", "same text", 0.9)
+    dropped_in = sig("okf:x", "same text", 0.4, deprecated=True)
+    kept, dropped = dedupe([kept_in, dropped_in])
+    assert dropped == [(dropped_in, "duplicate_of:rag:x")]
+    assert [k.item.id for k in kept] == ["rag:x"]
+    assert kept[0].item.signals.deprecated is True
+    assert kept[0].adjustments == ("inherited:deprecated:okf:x",)
+    assert kept[0].final == 0.9
+
+
+def test_stale_or_and_trust_citation_only_when_none():
+    a = sig("a", "same text", 0.9, trust="human-reviewed", citation="A")
+    b = sig("b", "same text", 0.4, stale=True, trust="unverified", citation="B")
+    (k,), _ = dedupe([a, b])
+    assert k.item.signals.stale is True
+    assert k.item.signals.trust == "human-reviewed"
+    assert k.item.signals.citation == "A"
+    assert k.adjustments == ("inherited:stale:b",)
+
+    c = sig("c", "same text", 0.9)
+    (k2,), _ = dedupe([c, b])
+    assert (k2.item.signals.trust, k2.item.signals.citation) == ("unverified", "B")
+    assert set(k2.adjustments) == {"inherited:stale:b", "inherited:trust:b", "inherited:citation:b"}
+
+
+def test_no_inheritance_returns_same_object():
+    a, b = sig("a", "same text", 0.9), sig("b", "same text", 0.4)
+    kept, _ = dedupe([a, b])
+    assert kept[0] is a
+
+
+def test_pinned_kept_item_inherits_but_stays_pinned_and_order_is_kept():
+    first = si("first", "unrelated words here", 0.1)
+    pin = sig("pin", "same text", 0.2, pinned=True)
+    dup = sig("dup", "same text", 0.9, deprecated=True)
+    kept, dropped = dedupe([first, pin, dup])
+    assert [k.item.id for k in kept] == ["first", "pin"]
+    assert kept[1].item.pinned
+    assert kept[1].item.signals.deprecated
+    assert dropped[0][1] == "duplicate_of:pin"

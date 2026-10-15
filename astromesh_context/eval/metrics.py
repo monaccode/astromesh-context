@@ -38,6 +38,27 @@ def distractor_rate(windows_doc_ids: Sequence[set[str]], distractors: frozenset[
     return sum(1 for ids in windows_doc_ids if ids & distractors) / len(windows_doc_ids)
 
 
+def superseded_rate(windows_doc_ids: Sequence[set[str]], superseded: frozenset[str]) -> float:
+    """Share of windows that contain at least one superseded (old-version) document."""
+    return distractor_rate(windows_doc_ids, superseded)
+
+
+def noise_share(
+    items: Iterable[ContextItem],
+    doc_id_of: Callable[[ContextItem], str | None],
+    noise_ids: frozenset[str],
+) -> float:
+    """Tokens from noise documents over all tokens in one window."""
+    total = 0
+    noisy = 0
+    for it in items:
+        n = it.tokens or 0
+        total += n
+        if doc_id_of(it) in noise_ids:
+            noisy += n
+    return noisy / total if total else 0.0
+
+
 def prefix_reuse(hashes: Sequence[str]) -> float:
     """Share of consecutive calls with an identical stable-prefix hash (1.0 below two calls)."""
     if len(hashes) < 2:
