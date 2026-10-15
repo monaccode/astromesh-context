@@ -272,7 +272,7 @@ metadata: { name: support }
 spec:
   budget: 8000
   tokenizer: chars            # chars | tiktoken:<encoding>
-  policy: { type: scored_knapsack, beta: 0.5 }
+  policy: scored_knapsack
   scorer: { type: llm, top_n: 30, alpha: 0.5 }      # optional
   sources:
     - { type: static, text_file: prompts/system.md, kind: instruction, pinned: true, stability: stable }
@@ -340,8 +340,9 @@ adapter belongs to the core migration, not here.
   `AgentMiddleware` (`ContextMiddleware`) wrapping the compactor and offloader, replacing the
   pre-1.0 `pre_model_hook`; `offload_tools(store)` as LangChain tools.
 - **PydanticAI:** `history_processor(compactor=…, offloader=…)`; `ctx_read`/`ctx_grep` as tools.
-- **MCP:** `astromesh-context mcp --config policy.yaml` serving `ctx_build(query)`,
-  `ctx_read`, `ctx_grep`.
+- **MCP:** `astromesh-context mcp --config policy.yaml` serves `ctx_build` only;
+  `ctx_read`/`ctx_grep` are served by `serve(engine, offloader)` from Python because they need
+  an in-process store.
 
 Each integration is a thin adapter over the public API, with no logic of its own.
 
@@ -410,7 +411,8 @@ report = await ContextEval(dataset=nimbus(), configs={...}, budgets=[750, 1000, 
 report.to_markdown(); report.to_json()
 ```
 
-CLI: `astromesh-context eval --config eval.yaml [--level 2]`.
+CLI: `astromesh-context eval [--level 1|2] [--budgets ...] [--embedder ...] [--subset N]
+[--out DIR]`; custom configs go through the Python API, `ContextEval(configs=...)`.
 
 ### 4.3 Testing
 

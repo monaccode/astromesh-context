@@ -38,9 +38,11 @@ extras opcionales.
 
 ## Instalación
 
-La 0.1.0 todavía no está en PyPI; instalala desde el repositorio:
+La 0.1.0 todavía no está en PyPI; instalala desde el repositorio. astromesh-rag tampoco está en
+PyPI, así que instalalo primero desde su release etiquetado y el extra `rag` lo usa:
 
 ```bash
+pip install "astromesh-rag @ git+https://github.com/monaccode/astromesh-rag@v0.1.0"
 pip install "astromesh-context[rag,okf] @ git+https://github.com/monaccode/astromesh-context@main"
 ```
 
@@ -304,6 +306,10 @@ así que todos los presupuestos son una exprimida. Cómo leer la tabla:
   copia que queda, mantiene afuera de la ventana las políticas reemplazadas: `superseded_rate`
   es 0.000 con 750 y 1000 y 0.033 con 2000 en todas las configuraciones. Antes de este cambio
   era 0.15 a 0.52, en la corrida del mantenedor en el commit `170d40a`.
+- `prefix reuse` da 1.000 en todas las filas por construcción: en este eval sólo el system
+  prompt y el índice OKF son estables, y los dos están fijados. Muestra que el orden mantiene el
+  bloque estable idéntico byte a byte entre llamadas, no una tasa de aciertos de caché con un
+  contenido que cambia de forma realista.
 - `scored_knapsack` empata con `everything` truncado en recall, precisión y tasa de
   distractores en todas las filas (los tokens por llamada difieren en menos de 0.1 con 750),
   porque los dos llenan por orden de puntaje. Lo que el knapsack agrega sobre el truncado son topes, mínimos y pisos

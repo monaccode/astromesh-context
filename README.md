@@ -37,9 +37,11 @@ optional extras.
 
 ## Install
 
-0.1.0 is not on PyPI yet; install from the repository:
+0.1.0 is not on PyPI yet; install from the repository. astromesh-rag is not on PyPI either, so
+install it first from its tagged release and the `rag` extra resolves to it:
 
 ```bash
+pip install "astromesh-rag @ git+https://github.com/monaccode/astromesh-rag@v0.1.0"
 pip install "astromesh-context[rag,okf] @ git+https://github.com/monaccode/astromesh-context@main"
 ```
 
@@ -297,6 +299,9 @@ squeeze. Reading the table:
   stays, keeps superseded policies out of the window: `superseded_rate` is 0.000 at 750 and
   1000 and 0.033 at 2000 for every configuration. Before this change it was 0.15 to 0.52, in
   the maintainer's run at commit `170d40a`.
+- `prefix reuse` is 1.000 on every row by construction: in this eval only the system prompt and
+  the OKF index are stable, and both are pinned. It shows that the ordering keeps the stable
+  block byte-identical across calls, not a cache-hit rate under realistic churn.
 - `scored_knapsack` ties `everything` truncated on recall, precision and distractor rate on
   every row (tokens per call differ by under 0.1 at 750), because both fill by score order.
   What the knapsack adds over truncation is caps, minimums and floors per source, not a better
