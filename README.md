@@ -7,6 +7,8 @@
 **Decide what goes into your agent's context window, and prove it was the right call.**
 
 [![astromesh-runtime](https://img.shields.io/badge/astromesh-runtime-f472b6)](https://monaccode.github.io/astromesh/#ecosystem)
+[![PyPI](https://img.shields.io/pypi/v/astromesh-context?label=PyPI)](https://pypi.org/project/astromesh-context/)
+[![CI](https://github.com/monaccode/astromesh-context/actions/workflows/ci.yml/badge.svg)](https://github.com/monaccode/astromesh-context/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776ab)](https://www.python.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/monaccode/astromesh-context/blob/main/LICENSE)
 
@@ -37,12 +39,8 @@ optional extras.
 
 ## Install
 
-0.1.0 is not on PyPI yet; install from the repository. astromesh-rag is not on PyPI either, so
-install it first from its tagged release and the `rag` extra resolves to it:
-
 ```bash
-pip install "astromesh-rag @ git+https://github.com/monaccode/astromesh-rag@v0.1.0"
-pip install "astromesh-context[rag,okf] @ git+https://github.com/monaccode/astromesh-context@main"
+pip install "astromesh-context[rag,okf]"
 ```
 
 Add the extras you use: `rag` and `okf` for the sources, `tiktoken` for exact token counts,
@@ -388,7 +386,7 @@ The other frameworks astromesh-okf supports follow.
 `Offloader`; `ContextEval` with a first published level-1 comparison; the three integrations
 above; `kind: ContextPolicy` YAML.
 
-**Next:** level-2 answer-accuracy results; the first PyPI release.
+**Next:** level-2 answer-accuracy results.
 
 **Later:** more framework integrations; a graph source; adoption by the Astromesh core, where
 it replaces today's history trimming and template-based prefetch.

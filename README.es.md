@@ -7,6 +7,8 @@
 **Decidí qué entra en la ventana de contexto de tu agente, y demostrá que fue la decisión correcta.**
 
 [![astromesh-runtime](https://img.shields.io/badge/astromesh-runtime-f472b6)](https://monaccode.github.io/astromesh/#ecosystem)
+[![PyPI](https://img.shields.io/pypi/v/astromesh-context?label=PyPI)](https://pypi.org/project/astromesh-context/)
+[![CI](https://github.com/monaccode/astromesh-context/actions/workflows/ci.yml/badge.svg)](https://github.com/monaccode/astromesh-context/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776ab)](https://www.python.org/)
 [![Licencia: Apache-2.0](https://img.shields.io/badge/licencia-Apache--2.0-blue)](https://github.com/monaccode/astromesh-context/blob/main/LICENSE)
 
@@ -38,12 +40,8 @@ extras opcionales.
 
 ## Instalación
 
-La 0.1.0 todavía no está en PyPI; instalala desde el repositorio. astromesh-rag tampoco está en
-PyPI, así que instalalo primero desde su release etiquetado y el extra `rag` lo usa:
-
 ```bash
-pip install "astromesh-rag @ git+https://github.com/monaccode/astromesh-rag@v0.1.0"
-pip install "astromesh-context[rag,okf] @ git+https://github.com/monaccode/astromesh-context@main"
+pip install "astromesh-context[rag,okf]"
 ```
 
 Sumá los extras que uses: `rag` y `okf` para las fuentes, `tiktoken` para contar tokens con
@@ -397,7 +395,7 @@ cache; `LLMScorer`; fuentes para RAG, OKF, historial, contenido estático y call
 `Compactor` y `Offloader`; `ContextEval` con una primera comparación publicada de nivel 1; las
 tres integraciones de arriba; YAML `kind: ContextPolicy`.
 
-**Próximo:** los resultados de exactitud de respuesta del nivel 2; el primer release en PyPI.
+**Próximo:** los resultados de exactitud de respuesta del nivel 2.
 
 **Después:** más integraciones con frameworks; una fuente de grafos; adopción por el core de
 Astromesh, donde reemplaza el recorte de historial y el prefetch por plantillas de hoy.
