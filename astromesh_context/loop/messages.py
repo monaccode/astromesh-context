@@ -144,6 +144,25 @@ class AnthropicAdapter:
         ]
         return {**m, "content": blocks}
 
+    def tool_result_texts(self, m: dict) -> list[str]:
+        """The text of each tool_result block, in order (for per-block offloading)."""
+        return [
+            _join_text(_content_parts(b.get("content")))
+            for b in self._blocks(m)
+            if isinstance(b, dict) and b.get("type") == "tool_result"
+        ]
+
+    def replace_tool_result_texts(self, m: dict, texts: list[str]) -> dict:
+        """Replace each tool_result block's content with its own text; ids are kept."""
+        it = iter(texts)
+        blocks = [
+            {**b, "content": next(it)}
+            if isinstance(b, dict) and b.get("type") == "tool_result"
+            else b
+            for b in self._blocks(m)
+        ]
+        return {**m, "content": blocks}
+
 
 def units(messages: list[M], adapter: MessageAdapter[M]) -> list[list[M]]:
     """Group messages so a tool call is never separated from its results.

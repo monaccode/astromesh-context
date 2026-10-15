@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `Offloader` (with `MemoryStore` / `DirStore`): moves oversized tool results out of the
+  conversation, leaving a preview and a handle, and exposes `ctx_read` / `ctx_grep` tools to
+  fetch what the agent needs.
 - `Compactor` and `MessageAdapter` (`OpenAIAdapter`, `AnthropicAdapter`): summarize old turns
   without ever separating a tool call from its result; `units` is shared with `HistorySource`,
   which no longer groups a call without an id with an id-less tool message.
