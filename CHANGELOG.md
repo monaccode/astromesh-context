@@ -83,3 +83,7 @@ All notable changes to this project are documented here. The format follows
 - `ContextEngine` rejects duplicate source names and an unknown `SourceConfig.mode` at
   construction with the new `ConfigError` (a `ContextError` and a `ValueError`); `FixedSlots`
   raises it for invalid shares.
+- `astromesh-context eval --level 2` now also runs the `scored_knapsack+llm` row, scoring with
+  the judge model through `openai_compatible`.
+- The `eval` extra includes `astromesh-okf` (the eval reads the Nimbus OKF bundle), and the
+  hash-embedder hint names `astromesh-context[rag,okf]`.

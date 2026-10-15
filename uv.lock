@@ -51,6 +51,7 @@ dependencies = [
 
 [package.optional-dependencies]
 eval = [
+    { name = "astromesh-okf" },
     { name = "astromesh-rag", extra = ["sentence-transformers"] },
     { name = "httpx" },
 ]
@@ -89,6 +90,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "astromesh-okf", marker = "extra == 'eval'", specifier = ">=0.1,<0.2" },
     { name = "astromesh-okf", marker = "extra == 'okf'", specifier = ">=0.1,<0.2" },
     { name = "astromesh-rag", marker = "extra == 'rag'", git = "https://github.com/monaccode/astromesh-rag?tag=v0.1.0" },
     { name = "astromesh-rag", extras = ["sentence-transformers"], marker = "extra == 'eval'", git = "https://github.com/monaccode/astromesh-rag?tag=v0.1.0" },

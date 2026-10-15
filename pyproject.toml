@@ -31,7 +31,7 @@ llm = ["httpx>=0.27"]
 langchain = ["langchain>=1.0", "langchain-core>=1.6"]
 pydantic-ai = ["pydantic-ai-slim>=2.55; python_version >= '3.11'"]
 mcp = ["mcp>=2.3"]
-eval = ["astromesh-rag[sentence-transformers]>=0.1,<0.2", "httpx>=0.27"]
+eval = ["astromesh-rag[sentence-transformers]>=0.1,<0.2", "astromesh-okf>=0.1,<0.2", "httpx>=0.27"]
 
 [project.scripts]
 astromesh-context = "astromesh_context.cli:main"

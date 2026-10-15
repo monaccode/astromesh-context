@@ -1,7 +1,9 @@
 import json
 import re
 
+import httpx
 import pytest
+import respx
 
 pytest.importorskip("astromesh_rag")
 pytest.importorskip("astromesh_okf")
@@ -102,8 +104,26 @@ def test_missing_extra_names_the_right_extra(monkeypatch):
     from astromesh_context.errors import MissingExtraError
 
     monkeypatch.setitem(sys.modules, "astromesh_rag.testing", None)
-    with pytest.raises(MissingExtraError, match=r"\[rag\]"):
+    with pytest.raises(MissingExtraError, match=r"\[rag,okf\]"):
         _embedder("hash")
     monkeypatch.setitem(sys.modules, "astromesh_rag.embedders", None)
     with pytest.raises(MissingExtraError, match=r"\[eval\]"):
         _embedder("st")
+
+
+@respx.mock
+def test_cli_level2_runs_the_llm_scorer_row(tmp_path, monkeypatch):
+    monkeypatch.setenv("CTX_EVAL_BASE_URL", "https://llm.example.test/v1")
+    monkeypatch.setenv("CTX_EVAL_API_KEY", "sk-test")
+    monkeypatch.setenv("CTX_EVAL_MODEL", "answer-m")
+    monkeypatch.delenv("CTX_EVAL_JUDGE_MODEL", raising=False)
+    reply = {"choices": [{"message": {"content": "CORRECT"}}], "usage": {}}
+    respx.post("https://llm.example.test/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json=reply)
+    )
+    code = main(
+        ["eval", "--level", "2", "--subset", "2", "--budgets", "1000", "--out", str(tmp_path)]
+    )
+    assert code == 0
+    data = json.loads(next(tmp_path.glob("*.json")).read_text(encoding="utf-8"))
+    assert "scored_knapsack+llm" in {row["config"] for row in data["rows"]}

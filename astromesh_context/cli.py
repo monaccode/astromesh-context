@@ -23,7 +23,7 @@ def _embedder(kind: str):
     try:
         from astromesh_rag.testing import HashEmbedder
     except ImportError:
-        raise MissingExtraError("install astromesh-context[rag]") from None
+        raise MissingExtraError("install astromesh-context[rag,okf]") from None
     return HashEmbedder()
 
 
@@ -41,7 +41,11 @@ def _parse_budgets(text: str) -> list[int]:
 
 
 def _level2(env: dict[str, str]):
-    """The answer and judge callables plus the report meta; the key never reaches the meta."""
+    """The answer and judge callables, the scorer's ``complete`` and the report meta.
+
+    The judge model also scores for the ``scored_knapsack+llm`` row; the key never reaches the
+    meta.
+    """
     from astromesh_context.scorer import openai_chat, openai_compatible
 
     base_url, api_key, model = (env[n] for n in _REQUIRED_ENV)
@@ -51,11 +55,8 @@ def _level2(env: dict[str, str]):
         "judge_model": judge_model,
         "endpoint_host": urlparse(base_url).hostname,
     }
-    return (
-        openai_chat(base_url, api_key, model),
-        openai_compatible(base_url, api_key, judge_model),
-        meta,
-    )
+    judge = openai_compatible(base_url, api_key, judge_model)
+    return openai_chat(base_url, api_key, model), judge, judge, meta
 
 
 def _eval(args: argparse.Namespace) -> int:
@@ -67,14 +68,15 @@ def _eval(args: argparse.Namespace) -> int:
         dataset = dataset.subset(args.subset)
     extra: dict = {}
     models: dict = {}
+    complete = None
     if args.level == 2:
         missing = [n for n in _REQUIRED_ENV if not os.environ.get(n)]
         if missing:
             print(f"error: set {', '.join(missing)}", file=sys.stderr)
             return 2
-        answer, judge, extra = _level2(dict(os.environ))
+        answer, judge, complete, extra = _level2(dict(os.environ))
         models = {"answer": answer, "judge": judge}
-    configs = default_configs(_embedder(args.embedder))
+    configs = default_configs(_embedder(args.embedder), complete=complete)
     try:
         report = asyncio.run(
             ContextEval(dataset, configs, args.budgets, level=args.level, **models).run()
