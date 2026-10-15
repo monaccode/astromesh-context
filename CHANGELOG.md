@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Cache-stable ordering (`order_items`: stable, session, volatile edges-first, then history) and
+  rendering to text, OpenAI and Anthropic messages, with `stable_prefix_hash`.
 - Policies: `ScoredKnapsack` (density-ordered, per-source caps and floors, `min_items`),
   `FixedSlots` and `Everything`; pinned items always count against the budget.
 - `dedupe`: exact (id, normalized hash) and near-duplicate (5-word shingles, Jaccard >= 0.8)

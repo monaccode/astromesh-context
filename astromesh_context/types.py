@@ -131,3 +131,15 @@ class Window:
     budget: int
     trace: Trace
     stable_prefix_hash: str
+
+    def to_messages(
+        self, style: Literal["openai", "anthropic"] = "openai", include_query: bool = True
+    ) -> list[dict[str, Any]] | dict[str, Any]:
+        from astromesh_context.render import render_messages
+
+        return render_messages(self.items, self.query if include_query else "", style)
+
+    def to_text(self) -> str:
+        from astromesh_context.render import render_text
+
+        return render_text(self.items)
