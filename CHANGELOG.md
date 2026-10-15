@@ -41,6 +41,14 @@ All notable changes to this project are documented here. The format follows
 - Project skeleton, data model (`ContextItem`, `Signals`, `Budget`, `Trace`, `Window`) and token
   counting (`CharEstimator`, `TiktokenTokenizer`).
 
+### Changed
+
+- Near-duplicate detection uses the containment coefficient over 5-word shingles instead of
+  Jaccard, so a retrieval chunk matches the document it was cut from; texts with no words
+  never near-match.
+- `ScoredKnapsack` defaults to `beta=0.0` (calibrated-score order); `beta=0.5` density
+  weighting favored short noise over long relevant documents on the Nimbus eval.
+
 ### Fixed
 
 - Dedupe merges the dropped copy's signals (`deprecated`, `stale`, `trust`, `citation`) into

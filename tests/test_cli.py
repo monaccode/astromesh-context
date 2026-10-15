@@ -18,7 +18,7 @@ def test_cli_eval_writes_files(tmp_path, capsys):
     assert len(names) == 2
     assert all(re.fullmatch(r"\d{4}-\d{2}-\d{2}-hash-L1\.(json|md)", n) for n in names)
     data = json.loads(next(tmp_path.glob("*.json")).read_text(encoding="utf-8"))
-    assert len(data["rows"]) == 3
+    assert len(data["rows"]) == 4
     assert data["command"].startswith("astromesh-context eval --subset 6")
     assert "scored_knapsack" in capsys.readouterr().out
 

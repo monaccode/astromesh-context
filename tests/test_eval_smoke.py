@@ -69,7 +69,12 @@ async def run_subset(budgets=(1000,), n=12):
 
 async def test_eval_level1_subset():
     report = await run_subset()
-    assert [r["config"] for r in report.rows] == ["everything", "fixed_slots", "scored_knapsack"]
+    assert [r["config"] for r in report.rows] == [
+        "everything",
+        "fixed_slots",
+        "scored_knapsack",
+        "scored_knapsack_density",
+    ]
     for row in report.rows:
         assert row["budget"] == 1000
         for key in ("recall", "precision_per_token", "distractor_rate", "prefix_reuse"):
@@ -122,9 +127,22 @@ async def test_default_configs_with_complete_adds_llm_config():
         return "[]"
 
     configs = default_configs(HashEmbedder(), complete=complete)
-    assert list(configs) == ["everything", "fixed_slots", "scored_knapsack", "scored_knapsack+llm"]
+    assert list(configs) == [
+        "everything",
+        "fixed_slots",
+        "scored_knapsack",
+        "scored_knapsack_density",
+        "scored_knapsack+llm",
+    ]
     engine = await configs["scored_knapsack+llm"](nimbus().subset(1), 1000)
     assert isinstance(engine.scorer, LLMScorer)
     plain = await configs["scored_knapsack"](nimbus().subset(1), 1000)
     assert plain.scorer is None
     assert configs["scored_knapsack+llm"].meta["scorer"] == "LLMScorer"
+
+
+async def test_knapsack_beta_recorded_in_config_meta():
+    report = await run_subset(n=2)
+    cm = report.meta["config_meta"]
+    assert cm["scored_knapsack"]["beta"] == 0.0
+    assert cm["scored_knapsack_density"]["beta"] == 0.5

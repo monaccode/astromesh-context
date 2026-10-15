@@ -75,7 +75,7 @@ astromesh_context/
   tokens.py        Tokenizer protocol; CharEstimator (default); TiktokenTokenizer ([tiktoken])
   calibrate.py     per-source normalization (rank, minmax, zscore) + signal adjustments
   scorer.py        Scorer protocol; LLMScorer ([llm] or any async callable)
-  dedupe.py        exact (hash) and near-duplicate (shingle Jaccard)
+  dedupe.py        exact (hash) and near-duplicate (shingle containment)
   policy.py        Policy protocol; ScoredKnapsack, FixedSlots, Everything
   order.py         cache-stable ordering
   engine.py        ContextEngine
@@ -202,7 +202,10 @@ Every adjustment is recorded in the trace entry.
 ### 2.4 Deduplication
 
 1. Exact: SHA-256 of whitespace-normalized, lower-cased content.
-2. Near: Jaccard over 5-word shingles ≥ 0.8 (configurable). O(n²) over candidates, which is
+2. Near: containment (overlap coefficient `|A∩B| / min(|A|,|B|)`) over 5-word shingles ≥ 0.8
+   (configurable). Containment, not Jaccard: a retrieval chunk is a fragment of the document it
+   came from, and symmetric Jaccard never reaches the threshold for fragment against whole.
+   Texts with no words never near-match. O(n²) over candidates, which is
    fine for the hundreds this sees; documented as such.
 
 The higher `final` wins; the other is excluded with `duplicate_of:<id>`. Pinned items always win.
@@ -217,7 +220,7 @@ outranks the OKF copy of a deprecated policy, the kept hit is still excluded as 
 
 All three apply calibration, dedupe and ordering identically; they differ only in `select`.
 
-**`ScoredKnapsack(beta=0.5, min_score=None, include_deprecated=False)`**
+**`ScoredKnapsack(beta=0.0, min_score=None, include_deprecated=False)`**
 
 1. Pinned items in. If their tokens alone exceed the budget → `BudgetExceededError` listing
    each pinned item and its tokens.
@@ -227,6 +230,10 @@ All three apply calibration, dedupe and ordering identically; they differ only i
    `budget`, `source_cap` or `below_floor`.
 4. Back-fill: one pass over excluded-for-`budget` items in density order, adding any that now
    fit.
+
+The default `beta=0` is pure calibrated-score order: on the Nimbus eval, density weighting
+(`beta=0.5`) favored short noise over long relevant documents. `beta` stays a parameter and the
+published table shows both.
 
 Greedy, O(n log n), deterministic (ties broken by item id). Not exact: with noisy scores the
 gap to an optimal knapsack is not worth the complexity, and the eval can measure it later.

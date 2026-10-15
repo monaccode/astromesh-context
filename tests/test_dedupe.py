@@ -43,7 +43,8 @@ def test_near_duplicate_over_threshold():
 
 def test_below_threshold_both_kept():
     words_ = BASE.split()
-    words_[14] = "changed"
+    words_[8] = "changed"
+    words_[20] = "changed"
     a, b = si("a", BASE + " alpha"), si("b", " ".join(words_) + " alpha")
     kept, dropped = dedupe([a, b])
     assert kept == [a, b]
@@ -141,3 +142,30 @@ def test_pinned_kept_item_inherits_but_stays_pinned_and_order_is_kept():
     assert kept[1].item.pinned
     assert kept[1].item.signals.deprecated
     assert dropped[0][1] == "duplicate_of:pin"
+
+
+def test_fragment_contained_in_document_is_duplicate():
+    doc_words = [f"w{i}" for i in range(120)]
+    document = si("okf:p", " ".join(doc_words), 0.4)
+    chunk = si("rag:p#0", " ".join(doc_words[40:80]), 0.9)
+    kept, dropped = dedupe([document, chunk])
+    assert kept == [chunk]
+    assert dropped == [(document, "duplicate_of:rag:p#0")]
+
+
+def test_partial_overlap_with_shorter_text_keeps_both():
+    doc_words = [f"w{i}" for i in range(120)]
+    # 40-word fragment, only its first 20 words come from the document: 16 of 36 shingles shared
+    fragment = doc_words[40:60] + [f"x{i}" for i in range(20)]
+    a, b = si("doc", " ".join(doc_words), 0.5), si("frag", " ".join(fragment), 0.4)
+    kept, dropped = dedupe([a, b])
+    assert kept == [a, b]
+    assert dropped == []
+
+
+def test_punctuation_only_texts_never_near_match():
+    a, b = si("a", "( ) { }", 0.5), si("b", "{ } ( )", 0.4)
+    # same hash after normalization is false here ("( ) { }" != "{ } ( )"), no words -> both kept
+    kept, dropped = dedupe([a, b])
+    assert kept == [a, b]
+    assert dropped == []

@@ -8,6 +8,7 @@ from astromesh_context import (
     ContextEngine,
     ContextItem,
     HistorySource,
+    ScoredKnapsack,
     SourceConfig,
     StaticSource,
 )
@@ -149,6 +150,7 @@ async def test_history_min_items_default_and_explicit():
             SourceConfig(HistorySource(big)),
         ],
         budget=1000,
+        policy=ScoredKnapsack(beta=0.5),  # density order: the long history items lose
     )
     w2 = await explicit.build("q")
     assert not any(i.id.startswith("history:") for i in w2.items)

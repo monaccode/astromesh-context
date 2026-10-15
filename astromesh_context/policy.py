@@ -44,7 +44,7 @@ def _split_pinned(
 class ScoredKnapsack:
     def __init__(
         self,
-        beta: float = 0.5,
+        beta: float = 0.0,
         min_score: float | None = None,
         include_deprecated: bool = False,
     ) -> None:

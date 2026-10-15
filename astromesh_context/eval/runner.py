@@ -249,8 +249,9 @@ def default_configs(
     configs: dict[str, ConfigFactory] = {
         "everything": make(Everything, truncate=True),
         "fixed_slots": make(FixedSlots, shares=FIXED_SHARES),
-        "scored_knapsack": make(ScoredKnapsack),
+        "scored_knapsack": make(ScoredKnapsack, beta=0.0),
+        "scored_knapsack_density": make(ScoredKnapsack, beta=0.5),
     }
     if complete is not None:
-        configs["scored_knapsack+llm"] = make(ScoredKnapsack, with_scorer=True)
+        configs["scored_knapsack+llm"] = make(ScoredKnapsack, with_scorer=True, beta=0.0)
     return configs

@@ -8,6 +8,19 @@ from collections.abc import Sequence
 from ._text import content_hash, shingles
 from .types import ScoredItem
 
+_NO_WORDS = frozenset({()})
+
+
+def _contained(a: frozenset, b: frozenset) -> float:
+    """Overlap coefficient ``|a & b| / min(|a|, |b|)``; 0.0 when either text has no words.
+
+    Containment, not Jaccard: a retrieval chunk is a fragment of the document it came from, and
+    Jaccard never reaches the threshold for fragment against whole.
+    """
+    if a == _NO_WORDS or b == _NO_WORDS:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
+
 
 def _inherit(kept: ScoredItem, dropped: ScoredItem) -> ScoredItem:
     """Merge the dropped copy's signals into the kept one (flags OR-ed; trust/citation if unset)."""
@@ -36,7 +49,7 @@ def dedupe(
     Items are visited pinned first, then by ``final`` descending, ties by id, so the strongest
     copy survives and inherits the dropped copy's signals (``deprecated``/``stale`` OR-ed,
     ``trust``/``citation`` when unset). An item is dropped as ``duplicate_of:<kept id>`` when its id, its normalized
-    content hash, or (Jaccard over 5-word shingles >= ``threshold``) its content matches a kept one.
+    content hash, or (containment over 5-word shingles >= ``threshold``) its content matches a kept one.
     """
     order = sorted(items, key=lambda s: (not s.item.pinned, -s.final, s.item.id))
     kept_ids: set[str] = set()
@@ -52,7 +65,7 @@ def dedupe(
         sh = shingles(item.content)
         if dup_of is None:
             for kept_id, other in kept_shingles:
-                if len(sh & other) / len(sh | other) >= threshold:
+                if _contained(sh, other) >= threshold:
                     dup_of = kept_id
                     break
         if dup_of is not None:

@@ -44,9 +44,21 @@ def test_knapsack_prefers_density():
     a = si("A", 0.9, 900)
     b = si("B", 0.6, 100)
     c = si("C", 0.6, 100)
-    sel = ScoredKnapsack().select([a, b, c], Budget(250))
+    sel = ScoredKnapsack(beta=0.5).select([a, b, c], Budget(250))
     assert ids(sel.included) == ["B", "C"]
     assert reasons(sel) == {"A": "budget"}
+
+
+def test_knapsack_default_beta_is_score_order():
+    assert ScoredKnapsack().beta == 0.0
+    a = si("A", 0.9, 900)
+    b = si("B", 0.6, 100)
+    c = si("C", 0.6, 100)
+    sel = ScoredKnapsack().select([a, b, c], Budget(1000))
+    assert ids(sel.included) == ["A", "B"]  # long high-score item first, then B (id tie-break)
+    tight = ScoredKnapsack().select([a, b, c], Budget(950))
+    assert ids(tight.included) == ["A"]
+    assert reasons(tight) == {"B": "budget", "C": "budget"}
 
 
 def test_knapsack_min_items_forced():
