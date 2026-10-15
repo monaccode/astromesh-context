@@ -11,6 +11,7 @@ from astromesh_context.errors import (
     SpecError,
 )
 from astromesh_context.policy import Everything, FixedSlots, ScoredKnapsack
+from astromesh_context.scorer import LLMScorer, openai_compatible
 from astromesh_context.source import (
     CallableSource,
     HistorySource,
@@ -32,6 +33,7 @@ __all__ = [
     "Everything",
     "FixedSlots",
     "HistorySource",
+    "LLMScorer",
     "MissingExtraError",
     "ScoredKnapsack",
     "Signals",
@@ -41,4 +43,5 @@ __all__ = [
     "Trace",
     "Window",
     "__version__",
+    "openai_compatible",
 ]

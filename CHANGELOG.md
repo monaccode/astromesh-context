@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `LLMScorer` and `openai_compatible`: optional model-based rescoring of the top candidates; any
+  failure keeps the calibrated scores and records `scorer_fallback:<reason>`.
 - `ContextEngine.build` with `StaticSource`, `CallableSource`, `HistorySource` and `SourceConfig`:
   concurrent source gathering with timeouts, graceful `source_error:` events, and a per-candidate
   `Trace`.

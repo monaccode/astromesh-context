@@ -14,6 +14,7 @@ from astromesh_context.dedupe import dedupe
 from astromesh_context.order import order_items
 from astromesh_context.policy import Policy, ScoredKnapsack
 from astromesh_context.render import stable_prefix_hash
+from astromesh_context.scorer import Scorer, ScorerFallback
 from astromesh_context.source import HistorySource, Source, SourceConfig
 from astromesh_context.tokens import CharEstimator, Tokenizer
 from astromesh_context.types import Budget, BuildContext, ContextItem, Trace, TraceEntry, Window
@@ -30,6 +31,7 @@ class ContextEngine:
         calibrator: Calibrator | None = None,
         dedupe_threshold: float = 0.8,
         source_timeout: float = 5.0,
+        scorer: Scorer | None = None,
     ) -> None:
         self.configs: list[SourceConfig] = []
         for s in sources:
@@ -45,6 +47,7 @@ class ContextEngine:
         self.calibrator = calibrator or Calibrator()
         self.dedupe_threshold = dedupe_threshold
         self.source_timeout = source_timeout
+        self.scorer = scorer
         self._budget = Budget(
             total=budget,
             caps={c.source.name: c.max_tokens for c in self.configs if c.max_tokens is not None},
@@ -107,7 +110,11 @@ class ContextEngine:
             weights={c.source.name: c.weight for c in self.configs},
             modes={c.source.name: c.mode for c in self.configs},
         )
-        # Seam: a scorer re-scores `scored` here, between calibration and deduplication.
+        if self.scorer is not None:
+            try:
+                scored = await self.scorer.score(query, scored)
+            except ScorerFallback as e:
+                events.append(f"scorer_fallback:{e.reason}")
         kept, dropped = dedupe(scored, self.dedupe_threshold)
         selection = self.policy.select(kept, self._budget)
 
