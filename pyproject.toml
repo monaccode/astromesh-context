@@ -61,6 +61,7 @@ astromesh-rag = { git = "https://github.com/monaccode/astromesh-rag", tag = "v0.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = ["error::RuntimeWarning"]
 
 [tool.ruff]
 target-version = "py310"

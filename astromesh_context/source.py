@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Protocol
@@ -24,7 +25,7 @@ class SourceConfig:
     source: Source
     weight: float = 1.0
     max_tokens: int | None = None
-    min_items: int = 0
+    min_items: int | None = None  # None: 2 for HistorySource, else 0
     timeout: float | None = None
     mode: str = "blend"
 
@@ -68,11 +69,17 @@ class CallableSource:
     ) -> None:
         self.name = name
         self._fn = fn
+        if inspect.iscoroutinefunction(fn):
+            # an async function is awaited on the event loop, never sent to a thread
+            self.candidates = self._acandidates  # type: ignore[method-assign]
 
     def candidates(
         self, query: str, ctx: BuildContext
     ) -> list[ContextItem] | Awaitable[list[ContextItem]]:
         return self._fn(query, ctx)
+
+    async def _acandidates(self, query: str, ctx: BuildContext) -> list[ContextItem]:
+        return await self._fn(query, ctx)  # type: ignore[misc]
 
 
 _ADAPTER = OpenAIAdapter()

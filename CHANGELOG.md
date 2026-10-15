@@ -69,3 +69,15 @@ All notable changes to this project are documented here. The format follows
   the kept item, so a deprecation seen only on one copy is no longer lost.
 - History items are never deduplicated: two identical turns (a user answering "sí" twice) both
   stay in the window, and a history turn no longer knocks out an identical knowledge item.
+- A history source wrapped in `SourceConfig` (or given options in YAML, e.g.
+  `{type: history, weight: 1.2}`) keeps its default `min_items=2`: `SourceConfig.min_items`
+  defaults to `None`, resolved by the engine to 2 for `HistorySource` and 0 otherwise.
+- A source returning malformed items (not a `ContextItem`, non-string `content`, a non-numeric
+  or non-finite `score`, `tokens` not a non-negative int) is dropped with
+  `source_error:<name>:invalid item <index>: <why>` instead of crashing the build.
+- `CallableSource` over an async function is awaited on the event loop instead of going through
+  a worker thread.
+- `SourceConfig(timeout=0)` is honored instead of falling back to the engine default.
+- `ContextEngine` rejects duplicate source names and an unknown `SourceConfig.mode` at
+  construction with the new `ConfigError` (a `ContextError` and a `ValueError`); `FixedSlots`
+  raises it for invalid shares.

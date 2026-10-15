@@ -5,12 +5,15 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import inspect
+import math
+import numbers
 import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 from astromesh_context.calibrate import Calibrator
 from astromesh_context.dedupe import dedupe
+from astromesh_context.errors import ConfigError
 from astromesh_context.order import order_items
 from astromesh_context.policy import Policy, ScoredKnapsack
 from astromesh_context.render import stable_prefix_hash
@@ -18,6 +21,25 @@ from astromesh_context.scorer import Scorer, ScorerFallback
 from astromesh_context.source import HistorySource, Source, SourceConfig
 from astromesh_context.tokens import CharEstimator, Tokenizer
 from astromesh_context.types import Budget, BuildContext, ContextItem, Trace, TraceEntry, Window
+
+_MODES = ("blend", "rank", "minmax", "zscore")
+
+
+def _invalid(it: object) -> str | None:
+    """Why a source's item cannot be used, or None when it is well formed."""
+    if not isinstance(it, ContextItem):
+        return f"not a ContextItem ({type(it).__name__})"
+    if not isinstance(it.content, str):
+        return f"content is not a str ({type(it.content).__name__})"
+    if isinstance(it.score, bool) or not isinstance(it.score, numbers.Real):
+        return f"score is not a number ({type(it.score).__name__})"
+    if not math.isfinite(it.score):
+        return f"score is not finite ({it.score})"
+    if it.tokens is not None and (
+        isinstance(it.tokens, bool) or not isinstance(it.tokens, int) or it.tokens < 0
+    ):
+        return f"tokens must be None or an int >= 0, got {it.tokens!r}"
+    return None
 
 
 class ContextEngine:
@@ -35,12 +57,18 @@ class ContextEngine:
     ) -> None:
         self.configs: list[SourceConfig] = []
         for s in sources:
-            if isinstance(s, SourceConfig):
-                self.configs.append(s)
-            elif isinstance(s, HistorySource):
-                self.configs.append(SourceConfig(s, min_items=2))
-            else:
-                self.configs.append(SourceConfig(s))
+            c = s if isinstance(s, SourceConfig) else SourceConfig(s)
+            if c.min_items is None:
+                c = dataclasses.replace(
+                    c, min_items=2 if isinstance(c.source, HistorySource) else 0
+                )
+            if c.mode not in _MODES:
+                raise ConfigError(
+                    f"source {c.source.name!r}: mode must be one of {list(_MODES)}, got {c.mode!r}"
+                )
+            if any(other.source.name == c.source.name for other in self.configs):
+                raise ConfigError(f"duplicate source name {c.source.name!r}")
+            self.configs.append(c)
         self.budget_total = budget
         self.policy: Policy = policy or ScoredKnapsack()
         self.tokenizer: Tokenizer = tokenizer or CharEstimator()
@@ -55,7 +83,7 @@ class ContextEngine:
         )
 
     def _timeout(self, config: SourceConfig) -> float:
-        return config.timeout or self.source_timeout
+        return config.timeout if config.timeout is not None else self.source_timeout
 
     async def _gather_one(
         self, config: SourceConfig, query: str, ctx: BuildContext
@@ -74,13 +102,17 @@ class ContextEngine:
 
         try:
             items = await asyncio.wait_for(run(), self._timeout(config))
+            for index, it in enumerate(items):
+                why = _invalid(it)
+                if why is not None:
+                    return [], f"source_error:{name}:invalid item {index}: {why}"
+            return [
+                it if it.source == name else dataclasses.replace(it, source=name) for it in items
+            ], None
         except asyncio.TimeoutError:
             return [], f"source_error:{name}:timeout"
         except Exception as exc:  # noqa: BLE001 - any source failure degrades gracefully
             return [], f"source_error:{name}:{exc}"
-        return [
-            it if it.source == name else dataclasses.replace(it, source=name) for it in items
-        ], None
 
     async def build(self, query: str, *, vars: Mapping[str, Any] | None = None) -> Window:
         """Build the window for ``query``.

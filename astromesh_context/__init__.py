@@ -6,6 +6,7 @@ from astromesh_context.calibrate import Calibrator
 from astromesh_context.engine import ContextEngine
 from astromesh_context.errors import (
     BudgetExceededError,
+    ConfigError,
     ContextError,
     MissingExtraError,
     SpecError,
@@ -28,6 +29,7 @@ __all__ = [
     "Calibrator",
     "CallableSource",
     "CharEstimator",
+    "ConfigError",
     "ContextEngine",
     "ContextError",
     "ContextItem",

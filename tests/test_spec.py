@@ -99,6 +99,27 @@ def test_yaml_root_not_mapping(tmp_path):
     assert e.value.path == ""
 
 
+async def test_wrapped_history_yaml_keeps_newest_pair(tmp_path):
+    from astromesh_context import ContextItem
+
+    def kb(q, c):
+        return [
+            ContextItem(f"k{i}", f"fact {i} " + "x" * 100, "kb", "knowledge", "volatile", score=i)
+            for i in range(40)
+        ]
+
+    raw = _raw(
+        [{"type": "callable", "name": "kb", "object": "kb"}, {"type": "history", "weight": 1.2}],
+        policy={"type": "scored_knapsack", "beta": 0.5},  # density order: long history loses
+    )
+    engine = _load(raw, tmp_path, objects={"kb": kb})
+    assert engine.configs[1].weight == 1.2
+    assert engine.configs[1].min_items == 2
+    big = [{"role": "user", "content": "a" * 1200}, {"role": "assistant", "content": "b" * 1200}]
+    w = await engine.build("q", vars={"history": big})
+    assert {"history:0", "history:1"} <= {i.id for i in w.items}
+
+
 def test_bare_history_keeps_engine_default(tmp_path):
     engine = _load(_raw([{"type": "history"}]), tmp_path)
     assert isinstance(engine.configs[0].source, HistorySource)

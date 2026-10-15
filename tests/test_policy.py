@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from astromesh_context.errors import BudgetExceededError
+from astromesh_context.errors import BudgetExceededError, ConfigError
 from astromesh_context.policy import Everything, FixedSlots, ScoredKnapsack
 from astromesh_context.types import Budget, ContextItem, ScoredItem, Signals
 
@@ -162,9 +162,9 @@ def test_fixed_slots_subtracts_pinned_and_unknown_source():
 
 
 def test_fixed_slots_rejects_bad_shares():
-    with pytest.raises(ValueError, match=r"at most 1.0"):
+    with pytest.raises(ConfigError, match=r"at most 1.0"):
         FixedSlots({"a": 0.6, "b": 0.5})
-    with pytest.raises(ValueError, match=">= 0"):
+    with pytest.raises(ConfigError, match=">= 0"):
         FixedSlots({"a": -0.1})
     FixedSlots({"a": 0.5, "b": 0.5})
 

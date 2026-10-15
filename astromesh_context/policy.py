@@ -6,7 +6,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
-from astromesh_context.errors import BudgetExceededError
+from astromesh_context.errors import BudgetExceededError, ConfigError
 from astromesh_context.types import Budget, ScoredItem, Selection
 
 
@@ -99,9 +99,9 @@ class ScoredKnapsack:
 class FixedSlots:
     def __init__(self, shares: Mapping[str, float], include_deprecated: bool = False) -> None:
         if any(v < 0 for v in shares.values()):
-            raise ValueError(f"shares must be >= 0, got {dict(shares)}")
+            raise ConfigError(f"shares must be >= 0, got {dict(shares)}")
         if sum(shares.values()) > 1.0 + 1e-9:
-            raise ValueError(f"shares must sum to at most 1.0, got {sum(shares.values())}")
+            raise ConfigError(f"shares must sum to at most 1.0, got {sum(shares.values())}")
         self.shares = dict(shares)
         self.include_deprecated = include_deprecated
 

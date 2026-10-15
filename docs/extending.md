@@ -54,7 +54,11 @@ of a deprecated item found by another source is left out too) and `citation`.
 
 A source that raises, or takes longer than its timeout, does not fail the build: the window is
 built without it and the trace gets a `source_error:<name>:<message>` event. For a function
-instead of a class, wrap it in `CallableSource(fn, name="...")`.
+instead of a class, wrap it in `CallableSource(fn, name="...")`. An async `candidates` runs on the
+event loop; a sync one runs in the default thread pool, and a sync source that hangs keeps its
+thread after the timeout, so prefer async for anything that does I/O. A source whose items are
+malformed (not a `ContextItem`, non-string `content`, a non-numeric `score`, negative
+`tokens`) is dropped the same way, with `source_error:<name>:invalid item <index>: <why>`.
 
 ## A `Policy`
 

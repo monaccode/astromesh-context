@@ -1,10 +1,12 @@
 import asyncio
+import inspect
 
 import pytest
 
 from astromesh_context import (
     BudgetExceededError,
     CallableSource,
+    ConfigError,
     ContextEngine,
     ContextItem,
     HistorySource,
@@ -147,7 +149,7 @@ async def test_history_min_items_default_and_explicit():
     explicit = ContextEngine(
         [
             CallableSource(lambda q, c: knowledge(40, 100), name="kb"),
-            SourceConfig(HistorySource(big)),
+            SourceConfig(HistorySource(big), min_items=0),
         ],
         budget=1000,
         policy=ScoredKnapsack(beta=0.5),  # density order: the long history items lose
@@ -212,3 +214,94 @@ async def test_repeated_history_turns_are_both_kept():
     turns = [m for m in w.to_messages(include_query=False) if m["role"] != "system"]
     assert turns == msgs
     assert not [e for e in w.trace.entries if (e.reason or "").startswith("duplicate_of")]
+
+
+BIG_PAIR = [{"role": "user", "content": "a" * 1200}, {"role": "assistant", "content": "b" * 1200}]
+
+
+async def test_wrapped_history_keeps_newest_pair():
+    engine = ContextEngine(
+        [
+            CallableSource(lambda q, c: knowledge(40, 100), name="kb"),
+            SourceConfig(HistorySource(BIG_PAIR), max_tokens=100),
+        ],
+        budget=1000,
+        policy=ScoredKnapsack(beta=0.5),
+    )
+    assert engine.configs[1].min_items == 2
+    w = await engine.build("q")
+    assert {"history:0", "history:1"} <= {i.id for i in w.items}
+
+
+@pytest.mark.parametrize(
+    ("returned", "why"),
+    [
+        ([None], "invalid item 0: not a ContextItem"),
+        (
+            [
+                ContextItem("ok", "fine", "s", "knowledge", "volatile"),
+                ContextItem("bad", None, "s", "knowledge", "volatile"),
+            ],
+            "invalid item 1: content is not a str",
+        ),
+        ([ContextItem("b", "x", "s", "knowledge", "volatile", score=True)], "invalid item 0"),
+        ([ContextItem("b", "x", "s", "knowledge", "volatile", score="1")], "invalid item 0"),
+        ([ContextItem("b", "x", "s", "knowledge", "volatile", tokens=-1)], "invalid item 0"),
+        ([ContextItem("b", "x", "s", "knowledge", "volatile", tokens=1.5)], "invalid item 0"),
+    ],
+)
+async def test_malformed_items_drop_the_source(returned, why):
+    engine = ContextEngine(
+        [StaticSource("rules", pinned=True), CallableSource(lambda q, c: returned, name="bad")],
+        budget=100,
+    )
+    w = await engine.build("q")
+    assert [i.pinned for i in w.items] == [True]
+    assert len(w.trace.events) == 1
+    assert w.trace.events[0].startswith(f"source_error:bad:{why}")
+
+
+async def test_non_iterable_result_drops_the_source():
+    engine = ContextEngine([CallableSource(lambda q, c: 42, name="bad")], budget=100)
+    w = await engine.build("q")
+    assert w.items == []
+    assert w.trace.events[0].startswith("source_error:bad:")
+
+
+async def test_async_callable_source_is_awaited_directly():
+    import threading
+
+    seen = {}
+
+    async def fn(q, c):
+        seen["thread"] = threading.get_ident()
+        return []
+
+    source = CallableSource(fn, name="a")
+    assert inspect.iscoroutinefunction(source.candidates)
+    await ContextEngine([source], budget=10).build("q")
+    assert seen["thread"] == threading.get_ident()
+
+
+async def test_timeout_zero_is_honored():
+    async def slow(q, c):
+        await asyncio.sleep(0.05)
+        return []
+
+    engine = ContextEngine([SourceConfig(CallableSource(slow, name="slow"), timeout=0)], budget=10)
+    w = await engine.build("q")
+    assert "source_error:slow:timeout" in w.trace.events
+
+
+def test_duplicate_source_names_rejected():
+    with pytest.raises(ConfigError, match="kb"):
+        ContextEngine(
+            [CallableSource(lambda q, c: [], name="kb"), StaticSource("x", name="kb")],
+            budget=10,
+        )
+
+
+def test_unknown_mode_rejected():
+    with pytest.raises(ConfigError, match="mode"):
+        ContextEngine([SourceConfig(StaticSource("x"), mode="bogus")], budget=10)
+    assert issubclass(ConfigError, ValueError)

@@ -27,5 +27,9 @@ class SpecError(ContextError):
         super().__init__(f"{path}: {message}")
 
 
+class ConfigError(ContextError, ValueError):
+    """Invalid engine or policy configuration, rejected at construction."""
+
+
 class MissingExtraError(ContextError):
     """An optional dependency is not installed."""
