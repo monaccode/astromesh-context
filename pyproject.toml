@@ -54,10 +54,6 @@ exclude = ["uv.lock", ".superpowers", ".github"]
 [tool.hatch.build.targets.wheel]
 packages = ["astromesh_context"]
 
-[tool.uv.sources]
-# astromesh-rag is not on PyPI yet; remove once it is published.
-astromesh-rag = { git = "https://github.com/monaccode/astromesh-rag", tag = "v0.1.0" }
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

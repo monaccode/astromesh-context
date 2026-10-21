@@ -92,8 +92,8 @@ dev = [
 requires-dist = [
     { name = "astromesh-okf", marker = "extra == 'eval'", specifier = ">=0.1,<0.2" },
     { name = "astromesh-okf", marker = "extra == 'okf'", specifier = ">=0.1,<0.2" },
-    { name = "astromesh-rag", marker = "extra == 'rag'", git = "https://github.com/monaccode/astromesh-rag?tag=v0.1.0" },
-    { name = "astromesh-rag", extras = ["sentence-transformers"], marker = "extra == 'eval'", git = "https://github.com/monaccode/astromesh-rag?tag=v0.1.0" },
+    { name = "astromesh-rag", marker = "extra == 'rag'", specifier = ">=0.1,<0.2" },
+    { name = "astromesh-rag", extras = ["sentence-transformers"], marker = "extra == 'eval'", specifier = ">=0.1,<0.2" },
     { name = "httpx", marker = "extra == 'eval'", specifier = ">=0.27" },
     { name = "httpx", marker = "extra == 'llm'", specifier = ">=0.27" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=1.0" },
@@ -129,9 +129,13 @@ wheels = [
 [[package]]
 name = "astromesh-rag"
 version = "0.1.0"
-source = { git = "https://github.com/monaccode/astromesh-rag?tag=v0.1.0#a86bfba2f44ccd591c9a05adee37f0b5fe321f2f" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/32/40b7991298293fc17d6e3d8d7f21d8ed9126809edf03f07065144d31ba0d/astromesh_rag-0.1.0.tar.gz", hash = "sha256:ab38755ba9ab1d2ee4dd19c2798cdd3ab24c37ce92a3c0f1d4c94ee2a43e3a42", size = 84615, upload-time = "2026-10-21T01:25:07.99Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/b9/efd668f58cb8f860c0c27afbe8e37649549c8c0c719cf5eb8c4e4f50c67d/astromesh_rag-0.1.0-py3-none-any.whl", hash = "sha256:9fc3b58c8ac03ba6bd8dec2ba0fc80412b850a0f5bbec4589d383f168133aeb1", size = 43582, upload-time = "2026-10-21T01:25:06.674Z" },
 ]
 
 [package.optional-dependencies]
