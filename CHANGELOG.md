@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Eval: respuestas de referencia revisadas (4 corregidas: q-noise-05, q-noise-03, q-para-14, q-dist-10)
+
 ## [0.1.0] - 2026-10-20
 
 First release.
