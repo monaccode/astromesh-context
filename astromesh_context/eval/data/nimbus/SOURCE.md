@@ -9,4 +9,4 @@
 Do not edit these files here. To update them, copy them from a newer astromesh-rag commit,
 record the commit above and update the pinned hashes.
 
-- answers.jsonl: drafted from the relevant documents by the implementer; reviewed by: PENDING
+- answers.jsonl: drafted from the relevant documents by the implementer; reviewed by: Juan Carlos Romero, 2026-10-20 (asistido: REVIEW-ASSIST.md; 4 respuestas corregidas)
