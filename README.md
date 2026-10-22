@@ -308,11 +308,15 @@ squeeze. Reading the table:
   on this corpus: recall 0.267 against 0.550 at 750, 0.644 against 0.653 at 1000, and a tie at
   2000. That is why the default is `beta=0`.
 
-Answer-accuracy (level 2) results will be added after the reference answers are reviewed. The
-command is:
+**Level 2 (answer accuracy) has not been run yet.** The reference answers are reviewed and
+signed (2026-10-20, see `astromesh_context/eval/data/nimbus/SOURCE.md`); the run is pending
+because it needs a chat model and a judge behind an API. Until it is published, the numbers
+above say the context that reaches the model is cleaner, not that the answers are better. To
+run it against any OpenAI-compatible endpoint (OpenRouter, a local Ollama, …;
+`CTX_EVAL_JUDGE_MODEL` is optional and defaults to `CTX_EVAL_MODEL`):
 
 ```bash
-CTX_EVAL_BASE_URL=... CTX_EVAL_API_KEY=... CTX_EVAL_MODEL=... \
+CTX_EVAL_BASE_URL=... CTX_EVAL_API_KEY=... CTX_EVAL_MODEL=... CTX_EVAL_JUDGE_MODEL=... \
   uv run --extra eval astromesh-context eval --level 2 --embedder st --out results/
 ```
 
@@ -386,7 +390,7 @@ The other frameworks astromesh-okf supports follow.
 `Offloader`; `ContextEval` with a first published level-1 comparison; the three integrations
 above; `kind: ContextPolicy` YAML.
 
-**Next:** level-2 answer-accuracy results.
+**Next:** run and publish level 2 (answer accuracy). The reference answers are already reviewed.
 
 **Later:** more framework integrations; a graph source; adoption by the Astromesh core, where
 it replaces today's history trimming and template-based prefetch.

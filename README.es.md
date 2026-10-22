@@ -316,11 +316,16 @@ así que todos los presupuestos son una exprimida. Cómo leer la tabla:
   ajustados en este corpus: recall 0.267 contra 0.550 con 750, 0.644 contra 0.653 con 1000, y
   empate con 2000. Por eso el valor por defecto es `beta=0`.
 
-Los resultados de exactitud de respuesta (nivel 2) se van a agregar cuando se revisen las
-respuestas de referencia. El comando es:
+**El nivel 2 (exactitud de respuesta) todavía no se corrió.** Las respuestas de referencia
+están revisadas y firmadas (2026-10-20, ver `astromesh_context/eval/data/nimbus/SOURCE.md`); la
+corrida queda pendiente porque necesita un modelo de chat y un juez detrás de una API. Hasta que
+se publique, los números de arriba dicen que el contexto que llega al modelo es más limpio, no
+que las respuestas sean mejores. Para correrlo contra cualquier endpoint compatible con OpenAI
+(OpenRouter, un Ollama local, …; `CTX_EVAL_JUDGE_MODEL` es opcional y por defecto es
+`CTX_EVAL_MODEL`):
 
 ```bash
-CTX_EVAL_BASE_URL=... CTX_EVAL_API_KEY=... CTX_EVAL_MODEL=... \
+CTX_EVAL_BASE_URL=... CTX_EVAL_API_KEY=... CTX_EVAL_MODEL=... CTX_EVAL_JUDGE_MODEL=... \
   uv run --extra eval astromesh-context eval --level 2 --embedder st --out results/
 ```
 
@@ -395,7 +400,7 @@ cache; `LLMScorer`; fuentes para RAG, OKF, historial, contenido estático y call
 `Compactor` y `Offloader`; `ContextEval` con una primera comparación publicada de nivel 1; las
 tres integraciones de arriba; YAML `kind: ContextPolicy`.
 
-**Próximo:** los resultados de exactitud de respuesta del nivel 2.
+**Próximo:** correr y publicar el nivel 2 (exactitud de respuesta). Las respuestas de referencia ya están revisadas.
 
 **Después:** más integraciones con frameworks; una fuente de grafos; adopción por el core de
 Astromesh, donde reemplaza el recorte de historial y el prefetch por plantillas de hoy.
