@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - Eval: respuestas de referencia revisadas (4 corregidas: q-noise-05, q-noise-03, q-para-14, q-dist-10)
+- README: el nivel 2 figura como pendiente de correr (necesita un modelo de chat y un juez por API);
+  sin él no se afirma mejora en la calidad de respuesta. Documenta `CTX_EVAL_JUDGE_MODEL`.
 
 ## [0.1.0] - 2026-10-20
 
